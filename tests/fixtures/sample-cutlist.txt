@@ -1,0 +1,415 @@
+October 09, 2026                                      Stauffer Wood Product Co                                          Page 1
+                                                   Stotzfus, Virgil Cutting List
+
+          Job Number:
+
+
+
+          Order Date:
+       Delivery Date:
+         Salesperson:
+
+ Shipping directions:
+
+ Room    Description                    Interior                          Exterior                         Top Type
+===================================================================================================================================
+ 1   Kitchen                           3/4" EURO-Maple Base              3/4" 3/4 MAPLE VENEER            Granit / Quartz
+-----------------------------------------------------------------------------------------------------------------------------------
+ Cabinet
+ Number  Quantity Cabinet Type      Door/Panel Type           Cabinet           Left End   Right End  Angle/Clip/Radius
+===================================================================================================================================
+
+
+ Room 1               Kitchen
+ Exterior Color:
+ Interior Color:
+ Edge Banding:
+ Room Note:
+ 1-1       1      Base Cabinet      ECASE-SFP10                                 Finished   Finished
+ 1-2       1      Base Cabinet      ECASE-SFP10                                 Finished   Paneled
+ 1-2R      1      Base Cabinet      SFP-10 End Pnls., Top &                     Finished   Paneled
+ 1-3       1      Corner Base       ECASE-SFP10                                 Unfinished Unfinished
+ 1-4       1      Base Cabinet      ECASE-SFP10                                 Unfinished Unfinished
+ 1-5       1      Base Cabinet      ECASE-SFP10                                 Unfinished Unfinished
+ 1-6       1      Base Cabinet      ECASE-SFP10                                 Unfinished Unfinished
+ 1-7       1      Base Cabinet      ECASE-SFP10                                 Unfinished Finished
+ 1-8       1      Base Cabinet      ECASE-SFP10                                 Paneled    Unfinished
+ 1-8L      1      Base Cabinet      SFP-10 End Pnls., Top &                     Paneled    Unfinished
+ 1-9       1      Upper Cabinet     ECASE-SFP10                                 Finished   Finished
+ 1-10      1      Upper Cabinet     ECASE-SFP10                                 Unfinished Finished
+ 1-11      1      Upper Cabinet     ECASE-SFP10                                 Unfinished Unfinished
+ 1-12      1      Upper Cabinet     ECASE-SFP10                                 Finished   Paneled
+ 1-12R     1      Upper Cabinet     SFP-10 End Pnls., Top &                     Finished   Paneled
+ 1-13      1      Upper Cabinet     ECASE-SFP10                                 Paneled    Unfinished
+ 1-13L     1      Upper Cabinet     SFP-10 End Pnls., Top &                     Paneled    Unfinished
+ 1-14      1      Upper Cabinet     ECASE-SFP10                                 Unfinished Finished
+ 1-15      1      Upper Cabinet     ECASE-SFP10                                 Finished   Unfinished
+
+      R = Right end   L = Left end   B = Back
+ October 09, 2026                                      Stauffer Wood Product Co                                          Page 2
+                                                                                                       Job Number:
+BODIES                                             Stotzfus, Virgil Cutting List
+
+Number
+of Pieces  Width     Length                  Description         Room #Cabinet (Quantity)
+===================================================================================================================================
+
+                       ************ MATERIAL: Undefined Material ************
+
+
+ 1         11 3/4    30 1/2                  CORNER SUPPORT      1[#3(1)]
+                     ------------
+                     2.54  Ln. feet
+
+
+
+                       ************ MATERIAL: 1/4 Alma Ply ************
+
+
+ 1         51 7/8    39 1/4                  BACKS               1[#13(1)]
+                     ------------
+                     3.27  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         38        39 1/4                  BACKS               1[#12(1)]
+                     ------------
+                     3.27  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         36        39 1/4                  BACKS               1[#15(1)]
+                     ------------
+                     3.27  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         34 1/4    39 1/4                  BACKS               1[#14(1)]
+                     ------------
+                     3.27  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         29        27 1/4                  BACKS               1[#11(1)]
+                     ------------
+                     2.27  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         26        39 1/4                  BACKS               1[#10(1)]
+                     ------------
+                     3.27  Ln. feet = 1 Rip(s)  48x96 sheet
+
+
+
+                       ************ MATERIAL: 3/8 Lauan Ply ************
+
+
+ 1         38        30 1/2                  BACKS               1[#2(1)]
+                     ------------
+                     2.54  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         37 1/4    30 1/2                  BACKS               1[#4(1)]
+                     ------------
+                     2.54  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         35 3/4    23 1/4                  BACKS               1[#9(1)]
+                     ------------
+                     1.94  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         34        30 1/2                  BACKS               1[#6(1)]
+                     ------------
+                     2.54  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 2         27        30 1/2                  BACKS               1[#3(2)]
+                     ------------
+                     5.08  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         26 3/4    30 1/2                  BACKS               1[#1(1)]
+                     ------------
+                     2.54  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         17        30 1/2                  BACKS               1[#5(1)]
+                     ------------
+                     2.54  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         16 1/4    30 1/2                  BACKS               1[#7(1)]
+                     ------------
+                     2.54  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         11        30 1/2                  BACKS               1[#8(1)]
+                     ------------
+                     2.54  Ln. feet = 1 Rip(s)  48x96 sheet
+ October 09, 2026                                      Stauffer Wood Product Co                                          Page 3
+                                                                                                       Job Number:
+BODIES                                             Stotzfus, Virgil Cutting List
+
+Number
+of Pieces  Width     Length                  Description         Room #Cabinet (Quantity)
+===================================================================================================================================
+
+                       ************ MATERIAL: 3/4 Birch VC ************
+
+
+ 1         34 1/4    34 1/4                  BOTTOMS             1[#3(1)]
+                     ------------
+                     2.85  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 2         24 3/4    34 1/2                  WALL ENDS           1[#3(2)]
+                     ------------
+                     5.75  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         24        58                      FINISHED END        1[#9(1)]
+ 4         24        34 1/2                  FINISHED END        1[#1(2) #2(1) #7(1)]
+ 8         24        34 1/2                  WALL ENDS           1[#4(2) #5(2) #6(2) #7(1) #8(1)]
+ 1         24        23 3/4                  FINISHED END        1[#9(1)]
+                     ------------
+                     41.31  Ln. feet = 6 Rip(s)  48x96 sheet
+
+ 1         23        35 3/4                  BOTTOMS             1[#9(1)]
+                     ------------
+                     2.98  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         22 3/4    38                      BOTTOMS             1[#2(1)]
+ 1         22 3/4    37 1/4                  BOTTOMS             1[#4(1)]
+ 1         22 3/4    35 3/4                  TOPS                1[#9(1)]
+ 1         22 3/4    34                      BOTTOMS             1[#6(1)]
+ 1         22 3/4    26 3/4                  BOTTOMS             1[#1(1)]
+ 1         22 3/4    17                      BOTTOMS             1[#5(1)]
+ 1         22 3/4    16 1/4                  BOTTOMS             1[#7(1)]
+ 1         22 3/4    11                      BOTTOMS             1[#8(1)]
+                     ------------
+                     18  Ln. feet = 3 Rip(s)  48x96 sheet
+
+ 1         22 1/4    35 3/16   1L            ADJ.SHELVES         1[#9(1)]
+ 1         22 1/4    10 7/16   1L            ADJ.SHELVES         1[#8(1)]
+                     ------------
+                     3.8  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         18        39 3/4                  FINISHED END        1[#10(1)]
+ 1         18        39 3/4                  WALL ENDS           1[#10(1)]
+                     ------------
+                     6.62  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         17 3/4    26                      PARTITIONS          1[#10(1)]
+ 1         17 3/4    26                      TOPS                1[#10(1)]
+                     ------------
+                     4.33  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         17 1/4    25 7/16   1L            ADJ.SHELVES         1[#10(1)]
+                     ------------
+                     2.12  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 1         17        26                      BOTTOMS             1[#10(1)]
+                     ------------
+                     2.17  Ln. feet = 1 Rip(s)  48x96 sheet
+
+ 3         12        39 3/4                  FINISHED END        1[#12(1) #14(1) #15(1)]
+ 3         12        39 3/4                  WALL ENDS           1[#13(1) #14(1) #15(1)]
+ 2         12        27 3/4                  WALL ENDS           1[#11(2)]
+                     ------------
+                     24.5  Ln. feet = 4 Rip(s)  48x96 sheet
+
+ 1         11 3/4    51 7/8                  TOPS                1[#13(1)]
+ 1         11 3/4    38                      TOPS                1[#12(1)]
+ 1         11 3/4    36 3/4                  PARTITIONS          1[#13(1)]
+ 1         11 3/4    36                      TOPS                1[#15(1)]
+ 1         11 3/4    34 1/4                  TOPS                1[#14(1)]
+ 1         11 3/4    29                      TOPS                1[#11(1)]
+                     ------------
+                     18.82  Ln. feet = 3 Rip(s)  48x96 sheet
+
+ 2         11 1/4    37 7/16   1L            ADJ.SHELVES         1[#12(2)]
+ 2         11 1/4    35 7/16   1L            ADJ.SHELVES         1[#15(2)]
+ 2         11 1/4    34 1/16   1L            ADJ.SHELVES         1[#13(2)]
+ 2         11 1/4    33 11/16  1L            ADJ.SHELVES         1[#14(2)]
+ 1         11 1/4    28 7/16   1L            ADJ.SHELVES         1[#11(1)]
+ 2         11 1/4    16 7/16   1L            ADJ.SHELVES         1[#13(2)]
+                     ------------
+                     28.55  Ln. feet = 4 Rip(s)  48x96 sheet
+ October 09, 2026                                      Stauffer Wood Product Co                                          Page 4
+                                                                                                       Job Number:
+BODIES                                             Stotzfus, Virgil Cutting List
+
+Number
+of Pieces  Width     Length                  Description         Room #Cabinet (Quantity)
+===================================================================================================================================
+
+                       ************ MATERIAL: 3/4 Birch VC ************
+
+
+ 1         11        51 7/8                  BOTTOMS             1[#13(1)]
+ 1         11        38                      BOTTOMS             1[#12(1)]
+ 1         11        36                      BOTTOMS             1[#15(1)]
+ 1         11        34 1/4                  BOTTOMS             1[#14(1)]
+ 1         11        29                      BOTTOMS             1[#11(1)]
+                     ------------
+                     15.76  Ln. feet = 2 Rip(s)  48x96 sheet
+
+ 2         4         38                      TOP STRETCHERS      1[#2(2)]
+ 2         4         37 1/4                  TOP STRETCHERS      1[#4(2)]
+ 2         4         34                      TOP STRETCHERS      1[#6(2)]
+ 2         4         26 3/4                  TOP STRETCHERS      1[#1(2)]
+ 2         4         17                      TOP STRETCHERS      1[#5(2)]
+ 2         4         16 1/4                  TOP STRETCHERS      1[#7(2)]
+ 2         4         11                      TOP STRETCHERS      1[#8(2)]
+                     ------------
+                     30.04  Ln. feet = 4 Rip(s)  48x96 sheet
+ October 09, 2026                                      Stauffer Wood Product Co                                          Page 5
+                                                                                                       Job Number:
+                                                   Stotzfus, Virgil Cutting List
+
+END PANELS/WAINSCOT Panels
+===================================================================================================================================
+Style:              SFP-10 End Pnls., Top &                                                            18 ft. of 2 1/4" Stock
+Panel Material:     3/8 Maple                                                                          20 ft. of 2 1/2" Stock
+Stiles & Rails:     3/4 Maple                                                                           4 ft. of 6 1/2" Stock
+===================================================================================================================================
+  Finished Size (WxH)       Panels (WxH)               Rails (WxL)              Stiles/Mullions (WxL)  Room/Cabinet         Hinge
+-----------------------------------------------------------------------------------------------------------------------------------
+
+  2) 12       x 39 3/4      2) 8 1/4    x 35 3/4       2) 2 1/2 x 8 1/2         4) 2 1/4 x 39 3/4      1[#12R #13L]
+                                                       2) 2 1/4 x 8 1/2
+
+  2) 24       x 34 1/2      2) 19 3/4   x 26 1/4       2) 6 1/2 x 20            4) 2 1/2 x 34 1/2      1[#2R #8L]
+                                                       2) 2 1/2 x 20
+ October 09, 2026                                      Stauffer Wood Product Co                                          Page 6
+                                                                                                       Job Number:
+                                                   Stotzfus, Virgil Cutting List
+
+FRAME AND PANEL DOORS
+===================================================================================================================================
+Style:              ECASE-SFP10                        Pull Type:     ______________________          179 ft. of 2 1/4" Stock
+Panel Material:     3/8 Maple                          Hinge Type:    ______________________
+Stiles & Rails:     3/4 Maple
+===================================================================================================================================
+  Finished Size (WxH)       Panels (WxH)               Rails (WxL)              Stiles/Mullions (WxL)  Room/Cabinet-Opening Hinge
+-----------------------------------------------------------------------------------------------------------------------------------
+
+  2) 19 3/8   x 37 3/4      2) 15 5/8   x 34           4) 2 1/4 x 15 7/8        4) 2 1/4 x 37 3/4      1[#12(1)]            Pair
+
+  2) 18 3/8   x 37 3/4      2) 14 5/8   x 34           4) 2 1/4 x 14 7/8        4) 2 1/4 x 37 3/4      1[#15(1)]            Pair
+
+  1) 17 1/2   x 37 3/4      1) 13 3/4   x 34           2) 2 1/4 x 14            2) 2 1/4 x 37 3/4      1[#13(1)]            Left
+
+  4) 17 1/2   x 37 3/4      4) 13 3/4   x 34           8) 2 1/4 x 14            8) 2 1/4 x 37 3/4      1[#13(2) #14(1)]     Pair
+
+  1) 16 27/32 x 30 1/4      1) 13 3/32  x 26 1/2       2) 2 1/4 x 13 11/32      2) 2 1/4 x 30 1/4      1[#3(1)]             Right
+
+  2) 14 7/8   x 25 3/4      2) 11 1/8   x 22           4) 2 1/4 x 11 3/8        4) 2 1/4 x 25 3/4      1[#11(1)]            Pair
+
+  2) 19 3/8   x 23 5/16     2) 15 5/8   x 19 9/16      4) 2 1/4 x 15 7/8        4) 2 1/4 x 23 5/16     1[#2(1)]             Pair
+
+  1) 17 7/8   x 23 5/16     1) 14 1/8   x 19 9/16      2) 2 1/4 x 14 3/8        2) 2 1/4 x 23 5/16     1[#5(1)]             None
+
+  2) 17 3/8   x 23 5/16     2) 13 5/8   x 19 9/16      4) 2 1/4 x 13 7/8        4) 2 1/4 x 23 5/16     1[#6(1)]             Pair
+
+  1) 11 1/2   x 23 5/16     1) 7 3/4    x 19 9/16      2) 2 1/4 x 8             2) 2 1/4 x 23 5/16     1[#8(1)]             Left
+
+  2) 18 1/4   x 21 3/4      2) 14 1/2   x 18           4) 2 1/4 x 14 3/4        4) 2 1/4 x 21 3/4      1[#9(1)]             Pair
+
+  2) 13 3/8   x 21 3/4      2) 9 5/8    x 18           4) 2 1/4 x 9 7/8         4) 2 1/4 x 21 3/4      1[#10(1)]            Pair
+
+
+
+
+
+FRAME AND PANEL DRAWERS
+===================================================================================================================================
+Style:              ECASE-SFP10 1 3/4 rail             Pull Type:     ______________________           24 ft. of 2 1/4" Stock
+Panel Material:     3/4 Maple                                                                          62 ft. of 1 3/4" Stock
+Stiles & Rails:     3/4 Maple
+===================================================================================================================================
+  Finished Size (WxH)       Panels (WxH)               Rails (WxL)              Stiles/Mullions (WxL)  Room/Cabinet-Opening Hinge
+-----------------------------------------------------------------------------------------------------------------------------------
+
+  1) 37 3/4   x 13 9/16     1) 34       x 10 13/16     2) 1 3/4 x 34 1/4        2) 2 1/4 x 13 9/16     1[#4(C)]
+
+  1) 27 5/8   x 13 9/16     1) 23 7/8   x 10 13/16     2) 1 3/4 x 24 1/8        2) 2 1/4 x 13 9/16     1[#1(C)]
+
+  1) 17 1/8   x 13 9/16     1) 13 3/8   x 10 13/16     2) 1 3/4 x 13 5/8        2) 2 1/4 x 13 9/16     1[#7(C)]
+
+  1) 37 3/4   x 9 5/8       1) 34       x 6 7/8        2) 1 3/4 x 34 1/4        2) 2 1/4 x 9 5/8       1[#4(B)]
+
+  1) 27 5/8   x 9 5/8       1) 23 7/8   x 6 7/8        2) 1 3/4 x 24 1/8        2) 2 1/4 x 9 5/8       1[#1(B)]
+
+  1) 17 1/8   x 9 5/8       1) 13 3/8   x 6 7/8        2) 1 3/4 x 13 5/8        2) 2 1/4 x 9 5/8       1[#7(B)]
+
+  1) 38 7/8   x 6 13/16     1) 35 1/8   x 4 1/16       2) 1 3/4 x 35 3/8        2) 2 1/4 x 6 13/16     1[#2(A)]
+
+  1) 37 3/4   x 6 13/16     1) 34       x 4 1/16       2) 1 3/4 x 34 1/4        2) 2 1/4 x 6 13/16     1[#4(A)]
+
+  1) 34 7/8   x 6 13/16     1) 31 1/8   x 4 1/16       2) 1 3/4 x 31 3/8        2) 2 1/4 x 6 13/16     1[#6(A)]
+
+  1) 27 5/8   x 6 13/16     1) 23 7/8   x 4 1/16       2) 1 3/4 x 24 1/8        2) 2 1/4 x 6 13/16     1[#1(A)]
+
+  1) 17 7/8   x 6 13/16     1) 14 1/8   x 4 1/16       2) 1 3/4 x 14 3/8        2) 2 1/4 x 6 13/16     1[#5(A)]
+
+  1) 17 1/8   x 6 13/16     1) 13 3/8   x 4 1/16       2) 1 3/4 x 13 5/8        2) 2 1/4 x 6 13/16     1[#7(A)]
+
+  1) 11 1/2   x 6 13/16     1) 7 3/4    x 4 1/16       2) 1 3/4 x 8             2) 2 1/4 x 6 13/16     1[#8(A)]
+ October 09, 2026                                      Stauffer Wood Product Co                                          Page 7
+                                                                                                       Job Number:
+                                                   Stotzfus, Virgil Cutting List
+
+DRAWERS
+===================================================================================================================================
+Sides:              9/16 Poplar                        Slide Type:    None Selected.
+End:                9/16 Poplar
+Bottom:             1/4 Alma Ply
+===================================================================================================================================
+  Fronts (WxL)               Ends (WxL)                 Sides (WxL)                Bottoms (WxL)
+                             2) 11 5/8   x 25 3/4       2) 11 5/8   x 20 1/2       1) 25 1/8   x 20 3/8       1[#1(C)]
+
+                             2) 11 5/8   x 35 7/8       2) 11 5/8   x 20 1/2       1) 35 1/4   x 20 3/8       1[#4(C)]
+
+                             2) 11 5/8   x 15 1/4       2) 11 5/8   x 20 1/2       1) 14 5/8   x 20 3/8       1[#7(C)]
+
+                             2) 8 1/8    x 25 3/4       2) 8 1/8    x 20 1/2       1) 25 1/8   x 20 3/8       1[#1(B)]
+
+                             2) 8 1/8    x 35 7/8       2) 8 1/8    x 20 1/2       1) 35 1/4   x 20 3/8       1[#4(B)]
+
+                             2) 8 1/8    x 15 1/4       2) 8 1/8    x 20 1/2       1) 14 5/8   x 20 3/8       1[#7(B)]
+
+                             2) 5 1/8    x 25 3/4       2) 5 1/8    x 20 1/2       1) 25 1/8   x 20 3/8       1[#1(A)]
+
+                             2) 5 1/8    x 37           2) 5 1/8    x 20 1/2       1) 36 3/8   x 20 3/8       1[#2(A)]
+
+                             2) 5 1/8    x 35 7/8       2) 5 1/8    x 20 1/2       1) 35 1/4   x 20 3/8       1[#4(A)]
+
+                             2) 5 1/8    x 16           2) 5 1/8    x 20 1/2       1) 15 3/8   x 20 3/8       1[#5(A)]
+
+                             2) 5 1/8    x 33           2) 5 1/8    x 20 1/2       1) 32 3/8   x 20 3/8       1[#6(A)]
+
+                             2) 5 1/8    x 15 1/4       2) 5 1/8    x 20 1/2       1) 14 5/8   x 20 3/8       1[#7(A)]
+
+                             2) 5 1/8    x 9 5/8        2) 5 1/8    x 20 1/2       1) 9        x 20 3/8       1[#8(A)]
+ October 09, 2026                                      Stauffer Wood Product Co                                          Page 8
+                                                                                                       Job Number:
+                                                   Stotzfus, Virgil Cutting List
+
+PULL-OUTS
+===================================================================================================================================
+Front:              3/8 Cherry                         Slide Type:    None Selected.
+Sides:              9/16 Poplar
+End:                9/16 Poplar
+Bottom:             1/4 Alma Ply
+===================================================================================================================================
+  Fronts (WxL)               Ends (WxL)                 Sides (WxL)                Bottoms (WxL)              Room/Cabinet
+-----------------------------------------------------------------------------------------------------------------------------------
+
+  2) 3        x 36 3/8       2) 2 3/4    x 35 1/2       4) 2 3/4    x 21 1/2       2) 34 7/8   x 21 3/8       1[#2(1,2)]
+ October 09, 2026                                      Stauffer Wood Product Co                                          Page 9
+                                                                                                       Job Number:
+                                                   Stotzfus, Virgil Cutting List
+
+===================================================================================================================================
+
+ JOB TOTALS
+ ----------------
+ Undefined Material        2.74      Sq. feet     0.00          0.00
+ 1/4 Alma Ply             125.64     Sq. feet     0.36         45.23               3.93 Sheets
+ 3/8 Lauan Ply            103.70     Ln. feet     0.50         51.85
+ 3/4 Birch VC             312.29     Sq. feet     0.90        281.06               9.76 Sheets
+ 9/16 Poplar              63.48      Sq. feet     1.25         79.35              11.90 Sheets
+ 3/4 Maple                71.59      Sq. feet     2.69        192.58
+ 3/8 Maple                64.57      Sq. feet     2.70        174.34               2.02 Sheets
+ 3/8 Cherry                1.52      Sq. feet     0.00          0.00               0.05 Sheets
+ 1/16 Veneer              18.68      Sq. feet     0.00          0.00
+ 3"Raised                 30.16      Ln. feet     3.70        111.59
+
+ Undefined Hardware          70      Pair         0.00          0.00
+                                                            ==========
+                                                              936.00
+
+ 
