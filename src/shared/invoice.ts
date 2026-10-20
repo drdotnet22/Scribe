@@ -1,4 +1,4 @@
-import type { DrawerOrderState, InvoiceData, Job, Line } from "./types.ts";
+import type { DoorOrderState, DrawerOrderState, InvoiceData, Job, Line } from "./types.ts";
 import { num, type Vars } from "./calc.ts";
 
 export const DEFAULT_TERMS = "* Terms: $500 to confirm; 1/3 Down; Balance at completion";
@@ -32,6 +32,7 @@ export function blankJob(id: string, title: string): Job {
     invoice: blankInvoice(),
     order: { supplier: "", date: today(), notes: "" },
     drawerOrder: blankDrawerOrder(),
+    doorOrder: blankDoorOrder(),
   };
 }
 
@@ -45,4 +46,12 @@ export function totals(inv: InvoiceData, vars?: Vars) {
 
 export function blankDrawerOrder(): DrawerOrderState {
   return { dateOrdered: today(), dateRequested: "", delivery: "", includePullouts: true };
+}
+
+export function blankDoorOrder(): DoorOrderState {
+  return {
+    type: "quote", po: "", date: today(), dateRequired: "",
+    species: "", doorStyle: "", insideEdge: "", panelProfile: "", outsideEdge: "", drawerStyle: "5 piece", euroHinges: true,
+    contactName: "", address: "", cityStateZip: "", phone: "", email: "",
+  };
 }

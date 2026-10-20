@@ -7,11 +7,12 @@ import { fileURLToPath } from "node:url";
 import { openDb, jobsRepo, settingsRepo } from "./db.ts";
 import { startBackups } from "./backup.ts";
 import { buildDrawerForm } from "./drawerForm.ts";
+import { buildDoorForm } from "./doorForm.ts";
 import { closeBrowser, renderPdf } from "./pdf.ts";
 import { parseCutlist, personName } from "../shared/cutlist.ts";
 import { hiddenByDefault, materialsIn } from "../shared/outputs.ts";
 import { carriedHidden, compareCutlists } from "../shared/diff.ts";
-import { blankDrawerOrder, blankJob } from "../shared/invoice.ts";
+import { blankDoorOrder, blankDrawerOrder, blankJob } from "../shared/invoice.ts";
 import type { Job } from "../shared/types.ts";
 
 const PORT = Number(process.env.PORT ?? 3000);
@@ -134,9 +135,24 @@ app.get<{ Params: { id: string } }>("/api/jobs/:id/drawer-order.xlsx", async (re
   }
 });
 
+app.get<{ Params: { id: string } }>("/api/jobs/:id/door-order.xlsx", async (req, reply) => {
+  const job = jobs.get(req.params.id);
+  if (!job) return reply.code(404).send({ error: "Job not found" });
+  try {
+    const buf = await buildDoorForm(job, job.doorOrder ?? blankDoorOrder());
+    const name = `${job.title.replace(/[\\/:*?"<>|]+/g, " ").trim() || "Job"} - Door order.xlsx`;
+    return reply
+      .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+      .header("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(name)}`)
+      .send(buf);
+  } catch (e) {
+    return reply.code(422).send({ error: (e as Error).message });
+  }
+});
+
 /* ---------- PDF ---------- */
 
-const DOC_NAMES: Record<string, string> = { invoice: "Invoice", doors: "Door order", plywood: "Plywood cutlist" };
+const DOC_NAMES: Record<string, string> = { invoice: "Invoice", plywood: "Plywood cutlist" };
 
 app.get<{ Params: { id: string; doc: string } }>("/api/jobs/:id/pdf/:doc", async (req, reply) => {
   const { id, doc } = req.params;

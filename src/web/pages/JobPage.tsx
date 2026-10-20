@@ -5,6 +5,7 @@ import { api } from "../api.ts";
 import { DocView, Topbar, type DocName } from "../components.tsx";
 import { useJob } from "../useJob.ts";
 import { CutlistTab } from "./CutlistTab.tsx";
+import { DoorTab } from "./DoorTab.tsx";
 import { DrawerTab } from "./DrawerTab.tsx";
 
 const TABS = [
@@ -31,7 +32,7 @@ export function JobPage() {
   if (error) return (<><Topbar /><main className="page"><p className="error-text">{error}</p><Link to="/">Back to jobs</Link></main></>);
   if (!job) return (<><Topbar /><main className="page muted">Loading…</main></>);
 
-  const isDoc = current !== "cutlist" && current !== "drawers";
+  const isDoc = current === "invoice" || current === "plywood";
   async function openPdf() {
     await flush();
     const url = `/api/jobs/${job!.id}/pdf/${current}`;
@@ -69,6 +70,8 @@ export function JobPage() {
         ? <CutlistTab job={job} update={update} replace={replace} flush={flush} />
         : current === "drawers"
         ? <DrawerTab job={job} update={update} flush={flush} />
+        : current === "doors"
+        ? <DoorTab job={job} update={update} flush={flush} />
         : <div className="workspace"><div className="sheet"><DocView doc={current as DocName} job={job} vars={vars} onEdit={update} /></div></div>}
     </>
   );

@@ -80,6 +80,24 @@ export interface DrawerOrderState {
 }
 
 /** One row on the supplier's drawer order form. */
+/** One row of finished doors, drawer fronts or end panels. */
+export interface SizeLine { qty: number; width: string; height: string; note: string }
+
+/** The supplier's door order form. Door specs are typed in by hand; sizes start from the cutlist. */
+export interface DoorOrderState {
+  type: "quote" | "order";
+  po: string;
+  date: string;                     // yyyy-mm-dd
+  dateRequired: string;
+  species: string; doorStyle: string; insideEdge: string; panelProfile: string; outsideEdge: string; drawerStyle: string;
+  euroHinges: boolean;              // drill for Euro hinges
+  contactName: string; address: string; cityStateZip: string; phone: string; email: string;
+  doors?: SizeLine[];               // hand-edited lists; when absent they come straight from the cutlist
+  fronts?: SizeLine[];
+  endPanels?: SizeLine[];
+}
+
+/** One row on the supplier's drawer order form. */
 export interface DrawerLine {
   qty: number;
   height: string; width: string; depth: string;
@@ -103,6 +121,7 @@ export interface Job {
   cutlist?: CutlistState;
   order: OrderState;
   drawerOrder?: DrawerOrderState;
+  doorOrder?: DoorOrderState;
 }
 export interface JobSummary { id: string; title: string; customer: string; updated: number }
 

@@ -169,3 +169,35 @@ test("drawers and pull-outs wider than the setting get the 3/8 bottom box", asyn
   assert.equal(wide(100), 0);
   assert.equal(cleanSettings({ bottom38OverWidth: "abc" }).bottom38OverWidth, 20);
 });
+
+test("door order rows come from the cutlist and end panels stay separate", async () => {
+  const { sizeLinesFromCutlist, doorLines, doorTableRows } = await import("../src/shared/outputs.ts");
+  const { blankJob } = await import("../src/shared/invoice.ts");
+  const p = parseCutlist(readFileSync(new URL("./fixtures/sample-cutlist.txt", import.meta.url), "utf8"));
+  const l = sizeLinesFromCutlist(p);
+  assert.equal(l.doors.reduce((t, r) => t + r.qty, 0), 22);
+  assert.equal(l.fronts.reduce((t, r) => t + r.qty, 0), 13);
+  assert.deepEqual(l.endPanels.map((r) => [r.qty, r.width, r.height]), [[2, "12", "39 3/4"], [2, "24", "34 1/2"]]);
+  assert.deepEqual(l.doors.filter((r) => r.note).map((r) => [r.width, r.height, r.note]), [["17 7/8", "23 5/16", "No bore"]]);
+  assert.equal(l.doors.find((r) => r.width === "17 1/2" && r.height === "37 3/4")!.qty, 5);   // 1 + 4 combined
+  const job = blankJob("x", "t"); job.cutlist = { raw: "", parsed: p, hiddenMaterials: [] };
+  job.doorOrder = { ...job.doorOrder!, doors: [{ qty: 1, width: "10", height: "20", note: "" }] };
+  assert.equal(doorLines(job, job.doorOrder).doors.length, 1);        // hand-edited list wins
+  assert.equal(doorLines(job, job.doorOrder).fronts.length, l.fronts.length);
+  assert.equal(doorTableRows(11, 2), 14);                             // doors + label row + end panels
+});
+
+test("door order xlsx is filled in and keeps the template's parts", async () => {
+  const { default: JSZip } = await import("jszip");
+  const { buildDoorForm } = await import("../src/server/doorForm.ts");
+  const { blankJob } = await import("../src/shared/invoice.ts");
+  const p = parseCutlist(readFileSync(new URL("./fixtures/sample-cutlist.txt", import.meta.url), "utf8"));
+  const job = blankJob("x", "Stolzfus"); job.cutlist = { raw: "", parsed: p, hiddenMaterials: [] };
+  job.doorOrder = { ...job.doorOrder!, species: "Qtr Sawn White Oak", type: "order" };
+  const zip = await JSZip.loadAsync(await buildDoorForm(job, job.doorOrder));
+  const xml = await zip.file("xl/worksheets/sheet1.xml")!.async("string");
+  assert.ok(xml.includes("END PANELS") && xml.includes("Qtr Sawn White Oak") && xml.includes("Stolzfus"));
+  assert.ok(xml.includes("No bore"));
+  assert.ok(!xml.includes("Shaker") && !xml.includes("P-25"));         // the sample order's specs are gone
+  assert.ok(zip.file("xl/styles.xml") && zip.file("xl/theme/theme1.xml"));
+});

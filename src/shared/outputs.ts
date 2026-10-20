@@ -3,7 +3,7 @@
 //  - plywood (sheet goods) cutlists grouped by material and thickness
 //  - named numbers (door square feet ...) that invoice formulas can use
 
-import type { CabRef, Dim, DrawerLine, DrawerOrderState, Job, OrderGroup, ParsedCutlist, PlyGroup, PlyRow } from "./types.ts";
+import type { CabRef, Dim, DoorOrderState, DrawerLine, DrawerOrderState, Job, OrderGroup, SizeLine, ParsedCutlist, PlyGroup, PlyRow } from "./types.ts";
 import type { Vars } from "./calc.ts";
 import { dim } from "./cutlist.ts";
 import { DEFAULT_SETTINGS, type AppSettings } from "./settings.ts";
@@ -230,3 +230,33 @@ export function drawerLines(job: Job, d: DrawerOrderState | undefined, settings:
   if (d?.rows) return d.rows;
   return job.cutlist ? drawerRows(job.cutlist.parsed, d?.includePullouts ?? true, settings) : [];
 }
+
+/* ---------- finished doors, drawer fronts and end panels (the supplier's door order form) ---------- */
+
+export const blankSizeLine = (): SizeLine => ({ qty: 1, width: "", height: "", note: "" });
+
+/** Straight from the cutlist: same sizes are combined, doors with no hinge get "No bore". */
+export function sizeLinesFromCutlist(p: ParsedCutlist): { doors: SizeLine[]; fronts: SizeLine[]; endPanels: SizeLine[] } {
+  const lines = (label: string, noBore: boolean): SizeLine[] => {
+    const g = orderGroups(p).find((x) => x.heading === label);
+    const merged = new Map<string, SizeLine>();
+    for (const r of g?.rows ?? []) {
+      const note = noBore && /^none$/i.test(r.hinge ?? "") ? "No bore" : "";
+      const key = [r.w, r.h, note].join("|");
+      const prev = merged.get(key);
+      if (prev) prev.qty += r.qty; else merged.set(key, { qty: r.qty, width: r.w, height: r.h, note });
+    }
+    return [...merged.values()];
+  };
+  return { doors: lines("Doors", true), fronts: lines("Drawer fronts", false), endPanels: lines("End panels", false) };
+}
+
+/** The rows that go on the form: a hand-edited list if there is one, otherwise the cutlist's. */
+export function doorLines(job: Job, d: DoorOrderState | undefined) {
+  const base = job.cutlist ? sizeLinesFromCutlist(job.cutlist.parsed) : { doors: [], fronts: [], endPanels: [] };
+  return { doors: d?.doors ?? base.doors, fronts: d?.fronts ?? base.fronts, endPanels: d?.endPanels ?? base.endPanels };
+}
+
+/** Rows on the form's left table (doors, then end panels under a label row) and the right table (fronts). */
+export const DOOR_FORM_ROWS = 31;
+export const doorTableRows = (doors: number, endPanels: number) => doors + (endPanels ? 1 + endPanels : 0);
