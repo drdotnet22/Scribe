@@ -57,7 +57,8 @@ export async function buildDrawerForm(job: Job, d: DrawerOrderState): Promise<Bu
   set("R11", d.dateRequested ? usDate(d.dateRequested) : "");
   set("R15", d.delivery);
 
-  // Species, thickness, grade, edge, drill, groove and clear coat are left exactly as the supplier's form ships.
+  // Species is always Maple. Thickness, grade, edge, drill, groove and clear coat stay as the supplier's form ships.
+  set("D20", "Maple");
 
   for (let i = 0; i < FORM_ROWS; i++) {
     const r = FIRST_ROW + i, row = rows[i];

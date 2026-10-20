@@ -3,7 +3,7 @@
 //  - plywood (sheet goods) cutlists grouped by material and thickness
 //  - named numbers (door square feet ...) that invoice formulas can use
 
-import type { CabRef, DrawerRow, OrderGroup, ParsedCutlist, PlyGroup, PlyRow } from "./types.ts";
+import type { CabRef, DrawerLine, DrawerOrderState, Job, OrderGroup, ParsedCutlist, PlyGroup, PlyRow } from "./types.ts";
 import type { Vars } from "./calc.ts";
 
 /** Materials that are dropped from the plywood cutlist unless the user turns them on. */
@@ -153,29 +153,20 @@ export function cutlistVars(p: ParsedCutlist): Vars {
 
 /* ---------- finished drawer boxes (the supplier's drawer order form) ---------- */
 
-/** "9/16 Poplar" -> "Poplar" */
-export function drawerSpecies(p: ParsedCutlist): string {
-  const s = p.sections.find((x) => x.heading === "DRAWERS")?.meta["Sides"] ?? "";
-  return s.replace(/^\s*(?:\d+\s+)?\d+\/\d+\s*/, "").replace(/^\d+\s+/, "").trim();
-}
+export const blankDrawerLine = (): DrawerLine => ({
+  qty: 1, height: "", width: "", depth: "",
+  bottom38: false, pulloutNoScoop: false, pulloutScoop: false, ears: false, scallop: "", partsOnly: false, logo: false,
+  front: "", note: "",
+});
 
 /**
- * One row per drawer box size. Box height is the end-piece width, box width is the
- * end-piece length, box depth is the side-piece length. The front size comes from the
- * matching drawer front (same cabinet and position letter in the cutlist).
+ * One row per drawer box size, straight from the cutlist. Box height is the end-piece width,
+ * box width is the end-piece length, box depth is the side-piece length. Front size is left blank.
  */
-export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerRow[] {
-  const frontOf = new Map<string, string>();
-  const fronts = p.sections.find((x) => x.heading === "FRAME AND PANEL DRAWERS");
-  for (const row of fronts?.rows ?? []) {
-    const c = row.columns["Finished Size"]?.[0];
-    if (!c) continue;
-    for (const r of row.refs) frontOf.set(`${r.cabinet}|${r.qty}`, `${c.l.text} x ${c.w.text}`);
-  }
-
-  const rows = new Map<string, DrawerRow & { h: number; w: number }>();
-  const add = (r: DrawerRow, h: number, w: number) => {
-    const key = [r.height, r.width, r.depth, r.front, r.note].join("|");
+export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerLine[] {
+  const rows = new Map<string, DrawerLine & { h: number; w: number }>();
+  const add = (r: DrawerLine, h: number, w: number) => {
+    const key = [r.height, r.width, r.depth, r.note].join("|");
     const prev = rows.get(key);
     if (prev) prev.qty += r.qty; else rows.set(key, { ...r, h, w });
   };
@@ -184,23 +175,26 @@ export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerRow[
   for (const row of boxes?.rows ?? []) {
     const end = row.columns["Ends"]?.[0], side = row.columns["Sides"]?.[0], bottom = row.columns["Bottoms"]?.[0];
     if (!end || !side) continue;
-    const qty = bottom?.qty ?? end.qty / 2;
-    const front = row.refs.map((r) => frontOf.get(`${r.cabinet}|${r.qty}`)).find(Boolean) ?? "";
-    add({ qty, height: end.w.text, width: end.l.text, depth: side.l.text, front, note: "" }, end.w.inches, end.l.inches);
+    add({ ...blankDrawerLine(), qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: side.l.text },
+      end.w.inches, end.l.inches);
   }
 
   if (includePullouts) {
     const po = p.sections.find((x) => x.heading === "PULL-OUTS");
     for (const row of po?.rows ?? []) {
-      const end = row.columns["Ends"]?.[0], side = row.columns["Sides"]?.[0], bottom = row.columns["Bottoms"]?.[0], fr = row.columns["Fronts"]?.[0];
+      const end = row.columns["Ends"]?.[0], side = row.columns["Sides"]?.[0], bottom = row.columns["Bottoms"]?.[0];
       if (!end || !side) continue;
-      add({
-        qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: side.l.text,
-        front: fr ? `${fr.w.text} x ${fr.l.text}` : "", note: "Pull-out",
-      }, end.w.inches, end.l.inches);
+      add({ ...blankDrawerLine(), qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: side.l.text, note: "Pull-out" },
+        end.w.inches, end.l.inches);
     }
   }
   return [...rows.values()]
     .sort((a, b) => Number(!!a.note) - Number(!!b.note) || b.h - a.h || b.w - a.w)
     .map(({ h: _h, w: _w, ...r }) => r);
+}
+
+/** The rows that go on the form: the hand-edited list if there is one, otherwise the cutlist's. */
+export function drawerLines(job: Job, d: DrawerOrderState | undefined): DrawerLine[] {
+  if (d?.rows) return d.rows;
+  return job.cutlist ? drawerRows(job.cutlist.parsed, d?.includePullouts ?? true) : [];
 }

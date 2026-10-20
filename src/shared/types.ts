@@ -70,15 +70,8 @@ export interface CutlistState {
 export interface CutlistVersion { revision: number; imported: number; raw: string }
 export interface OrderState { supplier: string; date: string; notes: string }
 
-/** Choices on the supplier's drawer order form (finished drawer boxes). */
+/** Order details for the supplier's drawer order form. The drawer specs themselves stay as the form ships. */
 export interface DrawerOrderState {
-  species: string;                  // blank = taken from the cutlist's drawer side material
-  thickness: "1/2" | "5/8";
-  grade: "Cabinet Plus+" | "Furniture Grade" | "Commercial Standard";
-  topEdge: "" | "Bullnose" | "Hand Radius";
-  frontDrill: "" | "Slab Drill" | "Corner Drill";
-  groove: "" | "Undermount" | "Sidemount 1/2" | "Sidemount 1/4";
-  clearCoat: boolean;
   dateOrdered: string;              // yyyy-mm-dd
   dateRequested: string;
   delivery: string;
