@@ -133,7 +133,8 @@ test("drawer order rows come from the drawer boxes, with the front size left bla
   assert.equal(rows.length, 14);
   assert.equal(rows.reduce((t, r) => t + r.qty, 0), 15);          // 13 boxes + 2 pull-outs
   assert.deepEqual(rows[0], { ...(await import("../src/shared/outputs.ts")).blankDrawerLine(), qty: 1, height: "11 5/8", width: "35 7/8", depth: "21" });
-  assert.equal(rows.at(-1)!.note, "Pull-out");
+  assert.ok(rows.at(-1)!.pulloutNoScoop && rows.at(-1)!.ears && rows.at(-1)!.note === "");
+  assert.ok(rows.slice(0, -1).every((r) => !r.pulloutNoScoop && !r.ears));
   assert.equal(drawerRows(p, false).length, 13);
   assert.ok(rows.every((r) => r.front === ""));
 });
@@ -145,8 +146,8 @@ test("drawer depths snap to undermount slide sizes, pull-outs keep theirs", asyn
   assert.equal(slideDepth(dim("17 1/2")), "18");
   assert.equal(slideDepth(dim("16")), "16");            // not within an inch of a slide: left alone, flagged in the app
   const rows = drawerRows(parseCutlist(readFileSync(new URL("./fixtures/sample-cutlist.txt", import.meta.url), "utf8")));
-  assert.ok(rows.filter((r) => !r.note).every((r) => r.depth === "21"));
-  assert.equal(rows.find((r) => r.note === "Pull-out")!.depth, "21 1/2");
+  assert.ok(rows.filter((r) => !r.pulloutNoScoop).every((r) => r.depth === "21"));
+  assert.equal(rows.find((r) => r.pulloutNoScoop)!.depth, "21 1/2");
   assert.ok(rows.every(depthMatchesSlide));
   assert.equal(inchesOf("20.5"), 20.5);
   assert.ok(!depthMatchesSlide({ ...rows[0], depth: "20 1/2" }));

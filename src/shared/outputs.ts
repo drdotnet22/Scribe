@@ -191,12 +191,12 @@ export const blankDrawerLine = (): DrawerLine => ({
 /**
  * One row per drawer box size, straight from the cutlist. Box height is the end-piece width,
  * box width is the end-piece length, box depth is the side-piece length rounded up to the slide size.
- * Pull-outs keep their own depth. Front size is left blank.
+ * Pull-outs keep their own depth and get the Pullout and Ears boxes ticked. Front size is left blank.
  */
 export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerLine[] {
   const rows = new Map<string, DrawerLine & { h: number; w: number }>();
   const add = (r: DrawerLine, h: number, w: number) => {
-    const key = [r.height, r.width, r.depth, r.note].join("|");
+    const key = [r.height, r.width, r.depth, r.pulloutNoScoop].join("|");
     const prev = rows.get(key);
     if (prev) prev.qty += r.qty; else rows.set(key, { ...r, h, w });
   };
@@ -214,12 +214,12 @@ export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerLine
     for (const row of po?.rows ?? []) {
       const end = row.columns["Ends"]?.[0], side = row.columns["Sides"]?.[0], bottom = row.columns["Bottoms"]?.[0];
       if (!end || !side) continue;
-      add({ ...blankDrawerLine(), qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: side.l.text, note: "Pull-out" },
+      add({ ...blankDrawerLine(), qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: side.l.text, pulloutNoScoop: true, ears: true },
         end.w.inches, end.l.inches);
     }
   }
   return [...rows.values()]
-    .sort((a, b) => Number(!!a.note) - Number(!!b.note) || b.h - a.h || b.w - a.w)
+    .sort((a, b) => Number(a.pulloutNoScoop) - Number(b.pulloutNoScoop) || b.h - a.h || b.w - a.w)
     .map(({ h: _h, w: _w, ...r }) => r);
 }
 
