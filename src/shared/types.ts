@@ -70,6 +70,22 @@ export interface CutlistState {
 export interface CutlistVersion { revision: number; imported: number; raw: string }
 export interface OrderState { supplier: string; date: string; notes: string }
 
+/** Choices on the supplier's drawer order form (finished drawer boxes). */
+export interface DrawerOrderState {
+  species: string;                  // blank = taken from the cutlist's drawer side material
+  thickness: "1/2" | "5/8";
+  grade: "Cabinet Plus+" | "Furniture Grade" | "Commercial Standard";
+  topEdge: "" | "Bullnose" | "Hand Radius";
+  frontDrill: "" | "Slab Drill" | "Corner Drill";
+  groove: "" | "Undermount" | "Sidemount 1/2" | "Sidemount 1/4";
+  clearCoat: boolean;
+  dateOrdered: string;              // yyyy-mm-dd
+  dateRequested: string;
+  delivery: string;
+  includePullouts: boolean;
+}
+export interface DrawerRow { qty: number; height: string; width: string; depth: string; front: string; note: string }
+
 export interface Job {
   id: string;
   title: string;                    // the invoice name; also the name used for files
@@ -78,6 +94,7 @@ export interface Job {
   invoice: InvoiceData;
   cutlist?: CutlistState;
   order: OrderState;
+  drawerOrder?: DrawerOrderState;
 }
 export interface JobSummary { id: string; title: string; customer: string; updated: number }
 

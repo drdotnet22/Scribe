@@ -125,3 +125,15 @@ test("revised cutlist is compared by pieces and needs no cabinet numbers", async
   assert.ok(c.changes.some((x) => x.area === "Doors" && x.to - x.from === 2));
   assert.ok(c.vars.some((v) => v.name === "doors_sqft" && v.to > v.from));
 });
+
+test("drawer order rows come from the drawer boxes and match their fronts", async () => {
+  const { drawerRows, drawerSpecies } = await import("../src/shared/outputs.ts");
+  const p = parseCutlist(readFileSync(new URL("./fixtures/sample-cutlist.txt", import.meta.url), "utf8"));
+  const rows = drawerRows(p);
+  assert.equal(rows.length, 14);
+  assert.equal(rows.reduce((t, r) => t + r.qty, 0), 15);          // 13 boxes + 2 pull-outs
+  assert.deepEqual(rows[0], { qty: 1, height: "11 5/8", width: "35 7/8", depth: "20 1/2", front: "13 9/16 x 37 3/4", note: "" });
+  assert.equal(rows.at(-1)!.note, "Pull-out");
+  assert.equal(drawerRows(p, false).length, 13);
+  assert.equal(drawerSpecies(p), "Poplar");
+});

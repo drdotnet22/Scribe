@@ -1,4 +1,4 @@
-import type { InvoiceData, Job, Line } from "./types.ts";
+import type { DrawerOrderState, InvoiceData, Job, Line } from "./types.ts";
 import { num, type Vars } from "./calc.ts";
 
 export const DEFAULT_TERMS = "* Terms: $500 to confirm; 1/3 Down; Balance at completion";
@@ -31,6 +31,7 @@ export function blankJob(id: string, title: string): Job {
     id, title, created: now, updated: now,
     invoice: blankInvoice(),
     order: { supplier: "", date: today(), notes: "" },
+    drawerOrder: blankDrawerOrder(),
   };
 }
 
@@ -40,4 +41,12 @@ export function totals(inv: InvoiceData, vars?: Vars) {
   const sub = cab + acc + extra;
   const grand = sub + num(inv.installation, vars);
   return { cab, acc, sub, grand, bal: grand - num(inv.paid, vars) };
+}
+
+/** The drawer order form as the supplier's template ships: 5/8", Cabinet Plus+, bullnose, undermount, clear coat. */
+export function blankDrawerOrder(): DrawerOrderState {
+  return {
+    species: "", thickness: "5/8", grade: "Cabinet Plus+", topEdge: "Bullnose", frontDrill: "",
+    groove: "Undermount", clearCoat: true, dateOrdered: today(), dateRequested: "", delivery: "", includePullouts: true,
+  };
 }

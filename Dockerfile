@@ -18,6 +18,7 @@ ENV NODE_ENV=production DATA_DIR=/data PORT=3000
 COPY package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/assets ./assets
 VOLUME /data
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
