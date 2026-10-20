@@ -212,3 +212,24 @@ test("door order defaults: cleaned, and used by new jobs and blank door orders",
   assert.equal(blankJob("x", "T", s.doorDefaults).doorOrder?.contactName, "Ryan");
   assert.equal(blankDoorOrder(s.doorDefaults).euroHinges, false);
 });
+
+test("size and quantity validation", async () => {
+  const { parseMeasure, tidyMeasure, sizeLineIssues, drawerLineIssues, qtyProblem } = await import("../src/shared/validate.ts");
+  const { blankDrawerLine } = await import("../src/shared/outputs.ts");
+  for (const [t, inches, out] of [["20", 20, "20"], ["20 1/2", 20.5, "20 1/2"], ["20-1/2", 20.5, "20 1/2"], ["3/8", 0.375, "3/8"], ["20.5", 20.5, "20 1/2"],
+    ["20 2/4", 20.5, "20 1/2"], ['14 3/16"', 14.1875, "14 3/16"], ["1/32", 1 / 32, "1/32"], ["7.0625", 7.0625, "7 1/16"]] as const) {
+    const r = parseMeasure(t);
+    assert.ok(r.ok, t);
+    if (r.ok) { assert.equal(r.inches, inches, t); assert.equal(r.text, out, t); }
+  }
+  for (const t of ["", "abc", "20 1/3", "20 1/64", "5/7", "20 3/2", "20 0/2", "0", "-5", "20.3", "1e3", "20 1/2 1/2", "20..5"]) assert.equal(parseMeasure(t).ok, false, t);
+  assert.equal(tidyMeasure("20-1/2"), "20 1/2");
+  assert.equal(tidyMeasure("bogus"), "bogus");
+  assert.equal(qtyProblem(2), undefined);
+  for (const q of [0, 1.5, -1, NaN]) assert.ok(qtyProblem(q), String(q));
+  assert.deepEqual(sizeLineIssues({ qty: 1, width: "", height: "", note: "" }), { qty: undefined, width: undefined, height: undefined });
+  assert.ok(sizeLineIssues({ qty: 1, width: "12", height: "", note: "" }).height);
+  assert.ok(sizeLineIssues({ qty: 1.5, width: "12", height: "x", note: "" }).qty);
+  assert.ok(drawerLineIssues({ ...blankDrawerLine(), height: "4", width: "12" }).depth);
+  assert.ok(drawerLineIssues({ ...blankDrawerLine(), scallop: "9/64" }).scallop);
+});

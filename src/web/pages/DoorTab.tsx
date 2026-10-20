@@ -3,6 +3,7 @@ import type { DoorOrderState, Job, SizeLine } from "../../shared/types.ts";
 import { blankDoorOrder } from "../../shared/invoice.ts";
 import { DEFAULT_SETTINGS, type AppSettings } from "../../shared/settings.ts";
 import { api } from "../api.ts";
+import { issueList, sizeLineIssues, tidyMeasure } from "../../shared/validate.ts";
 import { blankSizeLine, DOOR_FORM_ROWS, doorLines, doorTableRows } from "../../shared/outputs.ts";
 
 interface Props {
@@ -46,10 +47,23 @@ export function DoorTab({ job, update, flush }: Props) {
   const rightTooMany = lines.fronts.length > DOOR_FORM_ROWS;
   const total = (k: ListKey) => lines[k].reduce((t, r) => t + (Number(r.qty) || 0), 0);
 
-  const text = (k: ListKey, key: "width" | "height" | "note", i: number, label: string) => (
-    <input aria-label={`${label}, ${k} row ${i + 1}`} style={cell} value={lines[k][i][key]}
-      onChange={(e) => editList(k, (r) => { r[i] = { ...r[i], [key]: e.target.value }; })} />
-  );
+  const issues = { doors: lines.doors.map(sizeLineIssues), endPanels: lines.endPanels.map(sizeLineIssues), fronts: lines.fronts.map(sizeLineIssues) };
+  const problems = (k: ListKey) => issueList(issues[k], { qty: "Quantity", width: "Width", height: "Height" });
+  const invalidCount = (["doors", "endPanels", "fronts"] as ListKey[]).reduce((t, k) => t + problems(k).length, 0);
+  const bad: React.CSSProperties = { borderColor: "var(--danger)", background: "#fff1f0" };
+
+  const text = (k: ListKey, key: "width" | "height" | "note", i: number, label: string) => {
+    const msg = key === "note" ? undefined : issues[k][i][key];
+    return (
+      <input aria-label={`${label}, ${k} row ${i + 1}`} style={{ ...cell, ...(msg ? bad : {}) }} value={lines[k][i][key]}
+        aria-invalid={!!msg} title={msg}
+        onChange={(e) => editList(k, (r) => { r[i] = { ...r[i], [key]: e.target.value }; })}
+        onBlur={key === "note" ? undefined : (e) => {
+          const tidy = tidyMeasure(e.target.value);
+          if (tidy !== e.target.value) editList(k, (r) => { r[i] = { ...r[i], [key]: tidy }; });
+        }} />
+    );
+  };
 
   const section = (k: ListKey, title: string, help: string) => {
     const rows = lines[k];
@@ -67,7 +81,8 @@ export function DoorTab({ job, update, flush }: Props) {
             {rows.map((r, i) => (
               <tr key={i}>
                 <td>
-                  <input type="number" min={0} aria-label={`Quantity, ${k} row ${i + 1}`} style={cell} value={r.qty}
+                  <input type="number" min={1} step={1} aria-label={`Quantity, ${k} row ${i + 1}`} style={{ ...cell, ...(issues[k][i].qty ? bad : {}) }} value={r.qty}
+                    aria-invalid={!!issues[k][i].qty} title={issues[k][i].qty}
                     onChange={(e) => editList(k, (x) => { x[i] = { ...x[i], qty: e.target.value === "" ? 0 : Number(e.target.value) }; })} />
                 </td>
                 <td>{text(k, "width", i, "Width")}</td>
@@ -79,6 +94,7 @@ export function DoorTab({ job, update, flush }: Props) {
           </tbody>
         </table>
         {!rows.length && <p className="muted">None.</p>}
+        {!!problems(k).length && <ul className="error-text" role="alert" style={{ margin: "8px 0 0", paddingLeft: 18 }}>{problems(k).map((m) => <li key={m}>{m}</li>)}</ul>}
         <div className="row" style={{ marginTop: 10, flexWrap: "wrap" }}>
           <button className="btn" onClick={() => editList(k, (x) => { x.push(blankSizeLine()); })}>Add row</button>
           {job.cutlist && (
@@ -152,7 +168,8 @@ export function DoorTab({ job, update, flush }: Props) {
       )}
 
       <div className="row">
-        {leftTooMany || rightTooMany || !(lines.doors.length + lines.fronts.length + lines.endPanels.length)
+        {invalidCount > 0 && <span className="error-text" role="alert">Fix the {invalidCount} highlighted entr{invalidCount === 1 ? "y" : "ies"} above to download.</span>}
+        {invalidCount > 0 || leftTooMany || rightTooMany || !(lines.doors.length + lines.fronts.length + lines.endPanels.length)
           ? <button className="btn primary" disabled>Download xlsx</button>
           : <a className="btn primary" href={url} download onClick={async (e) => {
               e.preventDefault(); await flush(); window.location.href = url;

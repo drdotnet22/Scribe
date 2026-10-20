@@ -3,6 +3,7 @@ import type { DrawerLine, DrawerOrderState, Job } from "../../shared/types.ts";
 import { blankDrawerOrder } from "../../shared/invoice.ts";
 import { DEFAULT_SETTINGS, type AppSettings } from "../../shared/settings.ts";
 import { api } from "../api.ts";
+import { drawerLineIssues, issueList, tidyMeasure } from "../../shared/validate.ts";
 import { blankDrawerLine, depthMatchesSlide, drawerLines, SLIDE_SIZES } from "../../shared/outputs.ts";
 
 const CAPACITY = 21; // rows on the supplier's form
@@ -30,6 +31,9 @@ export function DrawerTab({ job, update, flush }: Props) {
   const tooMany = rows.length > CAPACITY;
   const badDepth = rows.map((r, i) => (depthMatchesSlide(r) ? -1 : i + 1)).filter((n) => n > 0);
   const url = `/api/jobs/${job.id}/drawer-order.xlsx`;
+  const issues = rows.map(drawerLineIssues);
+  const problems = issueList(issues, { qty: "Quantity", height: "Height", width: "Width", depth: "Depth", scallop: "Scallop sides to" });
+  const bad: React.CSSProperties = { borderColor: "var(--danger)", background: "#fff1f0" };
 
   const setOrder = (patch: Partial<DrawerOrderState>) =>
     update((j) => { j.drawerOrder = { ...(j.drawerOrder ?? blankDrawerOrder()), ...patch }; });
@@ -48,11 +52,16 @@ export function DrawerTab({ job, update, flush }: Props) {
     update((j) => { if (j.drawerOrder) delete j.drawerOrder.rows; });
   };
 
-  const text = (i: number, key: "height" | "width" | "depth" | "scallop" | "front" | "note", label: string, width?: number) => (
-    <input aria-label={`${label}, row ${i + 1}`}
-      style={{ ...cell, width: width ?? "100%", ...(key === "depth" && !depthMatchesSlide(rows[i]) ? { borderColor: "var(--danger)", background: "#fff1f0" } : {}) }} value={rows[i][key]}
-      onChange={(e) => setRow(i, { [key]: e.target.value })} />
-  );
+  const text = (i: number, key: "height" | "width" | "depth" | "scallop" | "front" | "note", label: string, width?: number) => {
+    const measure = key === "height" || key === "width" || key === "depth" || key === "scallop";
+    const msg = measure ? issues[i][key] : undefined;
+    return (
+      <input aria-label={`${label}, row ${i + 1}`} aria-invalid={!!msg} title={msg}
+        style={{ ...cell, width: width ?? "100%", ...(msg || (key === "depth" && !depthMatchesSlide(rows[i])) ? bad : {}) }} value={rows[i][key]}
+        onChange={(e) => setRow(i, { [key]: e.target.value })}
+        onBlur={measure ? (e) => { const t = tidyMeasure(e.target.value); if (t !== e.target.value) setRow(i, { [key]: t }); } : undefined} />
+    );
+  };
   const check = (i: number, key: "bottom38" | "pulloutNoScoop" | "pulloutScoop" | "ears" | "partsOnly" | "logo", label: string) => (
     <input type="checkbox" aria-label={`${label}, row ${i + 1}`} checked={rows[i][key]} onChange={(e) => setRow(i, { [key]: e.target.checked })} />
   );
@@ -99,6 +108,12 @@ export function DrawerTab({ job, update, flush }: Props) {
           </p>
         )}
 
+        {!!problems.length && (
+          <div className="error-text" role="alert">
+            <ul style={{ margin: "0 0 8px", paddingLeft: 18 }}>{problems.map((m) => <li key={m}>{m}</li>)}</ul>
+          </div>
+        )}
+
         <div style={{ overflowX: "auto" }}>
           <table className="plain" style={{ minWidth: 1050 }}>
             <thead>
@@ -112,7 +127,8 @@ export function DrawerTab({ job, update, flush }: Props) {
               {rows.map((r, i) => (
                 <tr key={i}>
                   <td style={{ width: 56 }}>
-                    <input type="number" min={0} aria-label={`Quantity, row ${i + 1}`} style={cell} value={r.qty}
+                    <input type="number" min={1} step={1} aria-label={`Quantity, row ${i + 1}`} style={{ ...cell, ...(issues[i].qty ? bad : {}) }} value={r.qty}
+                      aria-invalid={!!issues[i].qty} title={issues[i].qty}
                       onChange={(e) => setRow(i, { qty: e.target.value === "" ? 0 : Number(e.target.value) })} />
                   </td>
                   <td style={{ width: 84 }}>{text(i, "height", "Height")}</td>
@@ -151,7 +167,8 @@ export function DrawerTab({ job, update, flush }: Props) {
             </label>
           )}
           <span style={{ flex: 1 }} />
-          {tooMany || !rows.length
+          {problems.length > 0 && <span className="error-text" role="alert">Fix the {problems.length} highlighted entr{problems.length === 1 ? "y" : "ies"} to download.</span>}
+          {tooMany || problems.length > 0 || !rows.length
             ? <button className="btn primary" disabled>Download xlsx</button>
             : <a className="btn primary" href={url} download onClick={async (e) => {
                 e.preventDefault(); await flush(); window.location.href = url;
