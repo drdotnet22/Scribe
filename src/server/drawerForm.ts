@@ -5,7 +5,7 @@ import JSZip from "jszip";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { usDate } from "../shared/invoice.ts";
-import { drawerRows } from "../shared/outputs.ts";
+import { drawerLines } from "../shared/outputs.ts";
 import type { DrawerOrderState, Job } from "../shared/types.ts";
 
 export const FORM_ROWS = 21; // rows 34..54 on the form
@@ -37,15 +37,10 @@ function setCell(xml: string, ref: string, value: Value): string {
   return xml.replace(re, () => cell);
 }
 
-export function drawerFormInfo(job: Job) {
-  const cut = job.cutlist;
-  const d = job.drawerOrder;
-  const rows = cut ? drawerRows(cut.parsed, d?.includePullouts ?? true) : [];
-  return { rows, capacity: FORM_ROWS, fits: rows.length <= FORM_ROWS };
-}
-
 export async function buildDrawerForm(job: Job, d: DrawerOrderState): Promise<Buffer> {
-  const rows = job.cutlist ? drawerRows(job.cutlist.parsed, d.includePullouts) : [];
+  const blank = (r: { qty: number; height: string; width: string; depth: string; front: string; note: string; scallop: string }) =>
+    !r.qty && !r.height && !r.width && !r.depth && !r.front && !r.note && !r.scallop;
+  const rows = drawerLines(job, d).filter((r) => !blank(r));
   if (rows.length > FORM_ROWS) throw new Error(`The form holds ${FORM_ROWS} rows and this job has ${rows.length}.`);
 
   const zip = await JSZip.loadAsync(readFileSync(templatePath()));
@@ -62,11 +57,18 @@ export async function buildDrawerForm(job: Job, d: DrawerOrderState): Promise<Bu
 
   for (let i = 0; i < FORM_ROWS; i++) {
     const r = FIRST_ROW + i, row = rows[i];
-    set(`A${r}`, row ? row.qty : null);
+    const x = (on?: boolean) => (on ? "X" : null);
+    set(`A${r}`, row && row.qty ? row.qty : null);
     set(`B${r}`, row?.height ?? null);
     set(`D${r}`, row?.width ?? null);
     set(`F${r}`, row?.depth ?? null);
-    for (const col of "HIJKLMN") set(`${col}${r}`, null);   // the supplier's sample "X" is cleared too
+    set(`H${r}`, x(row?.bottom38));
+    set(`I${r}`, x(row?.pulloutNoScoop));
+    set(`J${r}`, x(row?.pulloutScoop));
+    set(`K${r}`, x(row?.ears));
+    set(`L${r}`, row?.scallop ?? null);
+    set(`M${r}`, x(row?.partsOnly));
+    set(`N${r}`, x(row?.logo));
     set(`O${r}`, row?.front ?? null);
     set(`Q${r}`, row?.note ?? null);
   }

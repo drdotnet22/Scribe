@@ -76,8 +76,23 @@ export interface DrawerOrderState {
   dateRequested: string;
   delivery: string;
   includePullouts: boolean;
+  rows?: DrawerLine[];              // hand-edited list; when absent the rows come straight from the cutlist
 }
-export interface DrawerRow { qty: number; height: string; width: string; depth: string; front: string; note: string }
+
+/** One row on the supplier's drawer order form. */
+export interface DrawerLine {
+  qty: number;
+  height: string; width: string; depth: string;
+  bottom38: boolean;                // 3/8" bottom
+  pulloutNoScoop: boolean;
+  pulloutScoop: boolean;
+  ears: boolean;
+  scallop: string;                  // "Scallop sides to"
+  partsOnly: boolean;
+  logo: boolean;                    // brand logo
+  front: string;                    // front size (height x length), typed by hand
+  note: string;                     // comments
+}
 
 export interface Job {
   id: string;

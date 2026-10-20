@@ -3,8 +3,9 @@
 //  - plywood (sheet goods) cutlists grouped by material and thickness
 //  - named numbers (door square feet ...) that invoice formulas can use
 
-import type { CabRef, DrawerLine, DrawerOrderState, Job, OrderGroup, ParsedCutlist, PlyGroup, PlyRow } from "./types.ts";
+import type { CabRef, Dim, DrawerLine, DrawerOrderState, Job, OrderGroup, ParsedCutlist, PlyGroup, PlyRow } from "./types.ts";
 import type { Vars } from "./calc.ts";
+import { dim } from "./cutlist.ts";
 
 /** Materials that are dropped from the plywood cutlist unless the user turns them on. */
 export const DEFAULT_HIDDEN_MATERIALS = ["Undefined Material"];
@@ -153,6 +154,34 @@ export function cutlistVars(p: ParsedCutlist): Vars {
 
 /* ---------- finished drawer boxes (the supplier's drawer order form) ---------- */
 
+/** Undermount slide lengths (inches). Drawer boxes must be exactly one of these deep. */
+export const SLIDE_SIZES = [9, 12, 15, 18, 21];
+
+/** "20 1/2", "20.5" or "21" -> inches, or null when it is not a number. */
+export function inchesOf(text: string): number | null {
+  const t = text.trim().replace(/"$/, "");
+  try { return dim(t).inches; } catch { /* maybe a decimal */ }
+  return /^\d+(\.\d+)?$/.test(t) ? parseFloat(t) : null;
+}
+
+/** Round a box depth up to the slide it rides on (only when it is within an inch of one). */
+export function slideDepth(d: Dim): string {
+  const slide = SLIDE_SIZES.find((s) => s >= d.inches - 1e-9 && s - d.inches <= 1);
+  return slide === undefined ? d.text : String(slide);
+}
+
+/** True for rows that should have a standard slide depth (everything except pull-outs). */
+export function needsSlideDepth(r: DrawerLine): boolean {
+  return !/pull-?out/i.test(r.note) && !r.pulloutNoScoop && !r.pulloutScoop;
+}
+
+/** True when the row's depth is one of the available slide sizes (or does not need one). */
+export function depthMatchesSlide(r: DrawerLine): boolean {
+  if (!needsSlideDepth(r)) return true;
+  const n = inchesOf(r.depth);
+  return n !== null && SLIDE_SIZES.includes(n);
+}
+
 export const blankDrawerLine = (): DrawerLine => ({
   qty: 1, height: "", width: "", depth: "",
   bottom38: false, pulloutNoScoop: false, pulloutScoop: false, ears: false, scallop: "", partsOnly: false, logo: false,
@@ -161,7 +190,8 @@ export const blankDrawerLine = (): DrawerLine => ({
 
 /**
  * One row per drawer box size, straight from the cutlist. Box height is the end-piece width,
- * box width is the end-piece length, box depth is the side-piece length. Front size is left blank.
+ * box width is the end-piece length, box depth is the side-piece length rounded up to the slide size.
+ * Pull-outs keep their own depth. Front size is left blank.
  */
 export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerLine[] {
   const rows = new Map<string, DrawerLine & { h: number; w: number }>();
@@ -175,7 +205,7 @@ export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerLine
   for (const row of boxes?.rows ?? []) {
     const end = row.columns["Ends"]?.[0], side = row.columns["Sides"]?.[0], bottom = row.columns["Bottoms"]?.[0];
     if (!end || !side) continue;
-    add({ ...blankDrawerLine(), qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: side.l.text },
+    add({ ...blankDrawerLine(), qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: slideDepth(side.l) },
       end.w.inches, end.l.inches);
   }
 

@@ -43,10 +43,6 @@ export function totals(inv: InvoiceData, vars?: Vars) {
   return { cab, acc, sub, grand, bal: grand - num(inv.paid, vars) };
 }
 
-/** The drawer order form as the supplier's template ships: 5/8", Cabinet Plus+, bullnose, undermount, clear coat. */
 export function blankDrawerOrder(): DrawerOrderState {
-  return {
-    species: "", thickness: "5/8", grade: "Cabinet Plus+", topEdge: "Bullnose", frontDrill: "",
-    groove: "Undermount", clearCoat: true, dateOrdered: today(), dateRequested: "", delivery: "", includePullouts: true,
-  };
+  return { dateOrdered: today(), dateRequested: "", delivery: "", includePullouts: true };
 }

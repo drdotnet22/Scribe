@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import type { DrawerLine, DrawerOrderState, Job } from "../../shared/types.ts";
 import { blankDrawerOrder } from "../../shared/invoice.ts";
-import { blankDrawerLine, drawerLines } from "../../shared/outputs.ts";
+import { blankDrawerLine, depthMatchesSlide, drawerLines, SLIDE_SIZES } from "../../shared/outputs.ts";
 
 const CAPACITY = 21; // rows on the supplier's form
 
@@ -24,6 +24,7 @@ export function DrawerTab({ job, update, flush }: Props) {
   const rows = drawerLines(job, job.drawerOrder);
   const boxes = rows.reduce((t, r) => t + (Number(r.qty) || 0), 0);
   const tooMany = rows.length > CAPACITY;
+  const badDepth = rows.map((r, i) => (depthMatchesSlide(r) ? -1 : i + 1)).filter((n) => n > 0);
   const url = `/api/jobs/${job.id}/drawer-order.xlsx`;
 
   const setOrder = (patch: Partial<DrawerOrderState>) =>
@@ -44,7 +45,8 @@ export function DrawerTab({ job, update, flush }: Props) {
   };
 
   const text = (i: number, key: "height" | "width" | "depth" | "scallop" | "front" | "note", label: string, width?: number) => (
-    <input aria-label={`${label}, row ${i + 1}`} style={{ ...cell, width: width ?? "100%" }} value={rows[i][key]}
+    <input aria-label={`${label}, row ${i + 1}`}
+      style={{ ...cell, width: width ?? "100%", ...(key === "depth" && !depthMatchesSlide(rows[i]) ? { borderColor: "var(--danger)", background: "#fff1f0" } : {}) }} value={rows[i][key]}
       onChange={(e) => setRow(i, { [key]: e.target.value })} />
   );
   const check = (i: number, key: "bottom38" | "pulloutNoScoop" | "pulloutScoop" | "ears" | "partsOnly" | "logo", label: string) => (
@@ -56,6 +58,7 @@ export function DrawerTab({ job, update, flush }: Props) {
       <h1>Drawer order</h1>
       <p className="muted" style={{ marginTop: -8 }}>
         Fills in the supplier's drawer order form. Drawer sizes start from the cutlist; change any of them, or add and remove drawers.
+        Depths are rounded up to the undermount slide sizes ({SLIDE_SIZES.join(", ")}). Pull-outs are the exception.
       </p>
 
       <div className="card" style={{ marginBottom: 14 }}>
@@ -82,6 +85,12 @@ export function DrawerTab({ job, update, flush }: Props) {
         {tooMany && (
           <p className="error-text" role="alert">
             The form has room for {CAPACITY} rows and this list has {rows.length}. Remove some rows or split the order.
+          </p>
+        )}
+
+        {!!badDepth.length && (
+          <p className="error-text" role="alert">
+            Row{badDepth.length === 1 ? "" : "s"} {badDepth.join(", ")}: depth is not an undermount slide size ({SLIDE_SIZES.join(", ")}). Fix the depth, or tick a pullout box if it is a pull-out.
           </p>
         )}
 
