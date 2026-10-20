@@ -201,3 +201,14 @@ test("door order xlsx is filled in and keeps the template's parts", async () => 
   assert.ok(!xml.includes("Shaker") && !xml.includes("P-25"));         // the sample order's specs are gone
   assert.ok(zip.file("xl/styles.xml") && zip.file("xl/theme/theme1.xml"));
 });
+
+test("door order defaults: cleaned, and used by new jobs and blank door orders", async () => {
+  const { cleanSettings, DEFAULT_SETTINGS } = await import("../src/shared/settings.ts");
+  const { blankJob, blankDoorOrder } = await import("../src/shared/invoice.ts");
+  assert.equal(cleanSettings({ bottom38OverWidth: 18 }).doorDefaults.drawerStyle, "5 piece");
+  assert.equal(cleanSettings({ doorDefaults: { species: 7, phone: "555" } }).doorDefaults.species, "");
+  const s = cleanSettings({ doorDefaults: { ...DEFAULT_SETTINGS.doorDefaults, species: "Maple", contactName: "Ryan", euroHinges: false } });
+  assert.equal(s.doorDefaults.species, "Maple");
+  assert.equal(blankJob("x", "T", s.doorDefaults).doorOrder?.contactName, "Ryan");
+  assert.equal(blankDoorOrder(s.doorDefaults).euroHinges, false);
+});

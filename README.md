@@ -16,7 +16,7 @@ Open http://SERVER:3000. Data lives in `./data` (SQLite file `app.db`, plus a da
 2. **Cutlist** tab: pick which materials appear on the plywood cutlist. Names such as `doors_sqft` can be used in invoice amount cells (e.g. `=doors_sqft*27.5`).
 3. **Revised cutlist**: import the new file on the Cutlist tab. Scribe lists what changed (doors, fronts, plywood parts, invoice formula numbers) and nothing is replaced until you approve. Earlier versions are kept and can be restored. Door order and plywood cutlist show "Revision N" after the first change.
 4. **Drawer order**: fills in the supplier's drawer order form (xlsx) from the cutlist's drawer boxes. Pick the form options, then Download xlsx.
-5. **Door order**: fills in the supplier's door order form (xlsx). Type the door specs, sizes start from the cutlist (end panels get their own labelled section), then Download xlsx.
+5. **Door order**: fills in the supplier's door order form (xlsx). Door specs and contact details start from your defaults in Settings, sizes start from the cutlist (end panels get their own labelled section), then Download xlsx.
 6. **Invoice** and **Plywood cutlist** tabs: Print, or Open PDF (made by headless Chromium so borders always print).
 
 ## Develop

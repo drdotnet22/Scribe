@@ -1,6 +1,8 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { DoorOrderState, Job, SizeLine } from "../../shared/types.ts";
 import { blankDoorOrder } from "../../shared/invoice.ts";
+import { DEFAULT_SETTINGS, type AppSettings } from "../../shared/settings.ts";
+import { api } from "../api.ts";
 import { blankSizeLine, DOOR_FORM_ROWS, doorLines, doorTableRows } from "../../shared/outputs.ts";
 
 interface Props {
@@ -18,15 +20,17 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 const cell: React.CSSProperties = { width: "100%", padding: "4px 6px", border: "1px solid var(--line)", borderRadius: 4, font: "inherit", minWidth: 0 };
 
 export function DoorTab({ job, update, flush }: Props) {
-  const d = job.doorOrder ?? blankDoorOrder();
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  useEffect(() => { api.getSettings().then(setSettings).catch(() => { /* built-in defaults are fine */ }); }, []);
+  const d = job.doorOrder ?? blankDoorOrder(settings.doorDefaults);
   const lines = doorLines(job, job.doorOrder);
   const [sure, setSure] = useState<ListKey | "">("");
   const url = `/api/jobs/${job.id}/door-order.xlsx`;
 
-  const set = (patch: Partial<DoorOrderState>) => update((j) => { j.doorOrder = { ...(j.doorOrder ?? blankDoorOrder()), ...patch }; });
+  const set = (patch: Partial<DoorOrderState>) => update((j) => { j.doorOrder = { ...(j.doorOrder ?? blankDoorOrder(settings.doorDefaults)), ...patch }; });
   const editList = (key: ListKey, change: (r: SizeLine[]) => void) =>
     update((j) => {
-      const order = j.doorOrder ?? blankDoorOrder();
+      const order = j.doorOrder ?? blankDoorOrder(settings.doorDefaults);
       const next = structuredClone(doorLines(j, order)[key]);
       change(next);
       j.doorOrder = { ...order, [key]: next };
@@ -91,7 +95,7 @@ export function DoorTab({ job, update, flush }: Props) {
     <main className="page" style={{ maxWidth: 1000 }}>
       <h1>Door order</h1>
       <p className="muted" style={{ marginTop: -8 }}>
-        Fills in the supplier's door order form. Door specs are typed here. Sizes start from the cutlist, and you can change any of them.
+        Fills in the supplier's door order form. Door specs and contact details start from your defaults in Settings. Sizes start from the cutlist, and you can change any of them.
       </p>
 
       <div className="card" style={{ marginBottom: 14 }}>

@@ -1,5 +1,6 @@
 import type { DoorOrderState, DrawerOrderState, InvoiceData, Job, Line } from "./types.ts";
 import { num, type Vars } from "./calc.ts";
+import { DEFAULT_DOOR_DEFAULTS, type DoorDefaults } from "./settings.ts";
 
 export const DEFAULT_TERMS = "* Terms: $500 to confirm; 1/3 Down; Balance at completion";
 
@@ -25,14 +26,14 @@ export function blankInvoice(): InvoiceData {
   };
 }
 
-export function blankJob(id: string, title: string): Job {
+export function blankJob(id: string, title: string, doorDefaults: DoorDefaults = DEFAULT_DOOR_DEFAULTS): Job {
   const now = Date.now();
   return {
     id, title, created: now, updated: now,
     invoice: blankInvoice(),
     order: { supplier: "", date: today(), notes: "" },
     drawerOrder: blankDrawerOrder(),
-    doorOrder: blankDoorOrder(),
+    doorOrder: blankDoorOrder(doorDefaults),
   };
 }
 
@@ -48,10 +49,7 @@ export function blankDrawerOrder(): DrawerOrderState {
   return { dateOrdered: today(), dateRequested: "", delivery: "", includePullouts: true };
 }
 
-export function blankDoorOrder(): DoorOrderState {
-  return {
-    type: "quote", po: "", date: today(), dateRequired: "",
-    species: "", doorStyle: "", insideEdge: "", panelProfile: "", outsideEdge: "", drawerStyle: "5 piece", euroHinges: true,
-    contactName: "", address: "", cityStateZip: "", phone: "", email: "",
-  };
+/** A new door order form: today's date, quote only, and your saved defaults for contact and door specs. */
+export function blankDoorOrder(defaults: DoorDefaults = DEFAULT_DOOR_DEFAULTS): DoorOrderState {
+  return { type: "quote", po: "", date: today(), dateRequired: "", ...defaults };
 }

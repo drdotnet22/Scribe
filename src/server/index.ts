@@ -57,7 +57,7 @@ const looksEmpty = (p: ReturnType<typeof parseCutlist>) => !p.bodyParts.length &
 
 app.post<{ Body: { title?: string; cutlistText?: string } }>("/api/jobs", async (req, reply) => {
   const { title = "", cutlistText } = req.body ?? {};
-  const job = blankJob(randomUUID(), title.trim());
+  const job = blankJob(randomUUID(), title.trim(), settings.get().doorDefaults);
   if (cutlistText?.trim()) {
     const parsed = attachCutlist(job, cutlistText);
     if (looksEmpty(parsed)) {
@@ -139,7 +139,7 @@ app.get<{ Params: { id: string } }>("/api/jobs/:id/door-order.xlsx", async (req,
   const job = jobs.get(req.params.id);
   if (!job) return reply.code(404).send({ error: "Job not found" });
   try {
-    const buf = await buildDoorForm(job, job.doorOrder ?? blankDoorOrder());
+    const buf = await buildDoorForm(job, job.doorOrder ?? blankDoorOrder(settings.get().doorDefaults));
     const name = `${job.title.replace(/[\\/:*?"<>|]+/g, " ").trim() || "Job"} - Door order.xlsx`;
     return reply
       .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
