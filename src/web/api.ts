@@ -1,4 +1,5 @@
 import type { CutlistComparison, Job, JobSummary } from "../shared/types.ts";
+import type { AppSettings } from "../shared/settings.ts";
 
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -14,6 +15,8 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getSettings: () => call<AppSettings>("/api/settings"),
+  saveSettings: (s: AppSettings) => call<AppSettings>("/api/settings", { method: "PUT", body: JSON.stringify(s) }),
   list: () => call<JobSummary[]>("/api/jobs"),
   get: (id: string) => call<Job>(`/api/jobs/${id}`),
   create: (title: string, cutlistText?: string) =>

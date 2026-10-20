@@ -6,6 +6,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { usDate } from "../shared/invoice.ts";
 import { drawerLines } from "../shared/outputs.ts";
+import type { AppSettings } from "../shared/settings.ts";
 import type { DrawerOrderState, Job } from "../shared/types.ts";
 
 export const FORM_ROWS = 21; // rows 34..54 on the form
@@ -37,10 +38,10 @@ function setCell(xml: string, ref: string, value: Value): string {
   return xml.replace(re, () => cell);
 }
 
-export async function buildDrawerForm(job: Job, d: DrawerOrderState): Promise<Buffer> {
+export async function buildDrawerForm(job: Job, d: DrawerOrderState, settings: AppSettings): Promise<Buffer> {
   const blank = (r: { qty: number; height: string; width: string; depth: string; front: string; note: string; scallop: string }) =>
     !r.qty && !r.height && !r.width && !r.depth && !r.front && !r.note && !r.scallop;
-  const rows = drawerLines(job, d).filter((r) => !blank(r));
+  const rows = drawerLines(job, d, settings).filter((r) => !blank(r));
   if (rows.length > FORM_ROWS) throw new Error(`The form holds ${FORM_ROWS} rows and this job has ${rows.length}.`);
 
   const zip = await JSZip.loadAsync(readFileSync(templatePath()));

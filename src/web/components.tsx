@@ -13,6 +13,7 @@ export function Topbar({ children }: { children?: ReactNode }) {
     <header className="topbar no-print">
       <Link className="brand" to="/">Scribe</Link>
       {children}
+      <Link className="navlink" to="/settings">Settings</Link>
     </header>
   );
 }

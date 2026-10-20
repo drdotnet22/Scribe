@@ -158,3 +158,5 @@ tr:hover > td > .x, .rl:hover > .x, .x:focus-visible { opacity: 1; }
 .chg.removed td:first-child { color: #a11; font-weight: 600; }
 .chg.changed td:first-child { color: #8a5a00; font-weight: 600; }
 .review { scroll-margin-top: 64px; }
+.topbar .navlink { color: var(--muted); text-decoration: none; font-size: 13px; }
+.topbar .navlink:hover { color: var(--accent); }

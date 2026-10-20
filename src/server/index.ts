@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openDb, jobsRepo } from "./db.ts";
+import { openDb, jobsRepo, settingsRepo } from "./db.ts";
 import { startBackups } from "./backup.ts";
 import { buildDrawerForm } from "./drawerForm.ts";
 import { closeBrowser, renderPdf } from "./pdf.ts";
@@ -21,6 +21,7 @@ const WEB_DIR = process.env.WEB_DIR ? resolve(process.env.WEB_DIR) : join(here, 
 
 const db = openDb(DATA_DIR);
 const jobs = jobsRepo(db);
+const settings = settingsRepo(db);
 const app = Fastify({ logger: { level: "info" }, bodyLimit: 10 * 1024 * 1024 });
 
 startBackups(db, jobs, DATA_DIR, (m) => app.log.info(m));
@@ -111,13 +112,18 @@ app.post<{ Params: { id: string }; Body: { text?: string } }>("/api/jobs/:id/cut
   return job;
 });
 
+/* ---------- settings ---------- */
+
+app.get("/api/settings", async () => settings.get());
+app.put<{ Body: unknown }>("/api/settings", async (req) => settings.save(req.body));
+
 /* ---------- drawer order form (.xlsx) ---------- */
 
 app.get<{ Params: { id: string } }>("/api/jobs/:id/drawer-order.xlsx", async (req, reply) => {
   const job = jobs.get(req.params.id);
   if (!job) return reply.code(404).send({ error: "Job not found" });
   try {
-    const buf = await buildDrawerForm(job, job.drawerOrder ?? blankDrawerOrder());
+    const buf = await buildDrawerForm(job, job.drawerOrder ?? blankDrawerOrder(), settings.get());
     const name = `${job.title.replace(/[\\/:*?"<>|]+/g, " ").trim() || "Job"} - Drawer order.xlsx`;
     return reply
       .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

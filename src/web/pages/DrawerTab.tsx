@@ -1,6 +1,8 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { DrawerLine, DrawerOrderState, Job } from "../../shared/types.ts";
 import { blankDrawerOrder } from "../../shared/invoice.ts";
+import { DEFAULT_SETTINGS, type AppSettings } from "../../shared/settings.ts";
+import { api } from "../api.ts";
 import { blankDrawerLine, depthMatchesSlide, drawerLines, SLIDE_SIZES } from "../../shared/outputs.ts";
 
 const CAPACITY = 21; // rows on the supplier's form
@@ -20,8 +22,10 @@ const cell: React.CSSProperties = { width: "100%", padding: "4px 6px", border: "
 export function DrawerTab({ job, update, flush }: Props) {
   const d = job.drawerOrder ?? blankDrawerOrder();
   const [sure, setSure] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  useEffect(() => { api.getSettings().then(setSettings).catch(() => { /* defaults are fine */ }); }, []);
   const edited = !!d.rows;
-  const rows = drawerLines(job, job.drawerOrder);
+  const rows = drawerLines(job, job.drawerOrder, settings);
   const boxes = rows.reduce((t, r) => t + (Number(r.qty) || 0), 0);
   const tooMany = rows.length > CAPACITY;
   const badDepth = rows.map((r, i) => (depthMatchesSlide(r) ? -1 : i + 1)).filter((n) => n > 0);
@@ -33,7 +37,7 @@ export function DrawerTab({ job, update, flush }: Props) {
   const editRows = (change: (r: DrawerLine[]) => void) =>
     update((j) => {
       const order = j.drawerOrder ?? blankDrawerOrder();
-      const next = structuredClone(drawerLines(j, order));
+      const next = structuredClone(drawerLines(j, order, settings));
       change(next);
       j.drawerOrder = { ...order, rows: next };
     });
@@ -59,6 +63,7 @@ export function DrawerTab({ job, update, flush }: Props) {
       <p className="muted" style={{ marginTop: -8 }}>
         Fills in the supplier's drawer order form. Drawer sizes start from the cutlist; change any of them, or add and remove drawers.
         Depths are rounded up to the undermount slide sizes ({SLIDE_SIZES.join(", ")}). Pull-outs are the exception.
+        Drawers wider than {settings.bottom38OverWidth}" get the 3/8" bottom box ticked (change this in Settings).
       </p>
 
       <div className="card" style={{ marginBottom: 14 }}>

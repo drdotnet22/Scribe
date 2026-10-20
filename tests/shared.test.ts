@@ -5,6 +5,7 @@ import { calc, display, isFormula } from "../src/shared/calc.ts";
 import { dim, parseCutlist, personName } from "../src/shared/cutlist.ts";
 import { cutlistVars, DEFAULT_HIDDEN_MATERIALS, materialsIn, orderGroups, plywoodGroups } from "../src/shared/outputs.ts";
 import { blankInvoice, totals } from "../src/shared/invoice.ts";
+import { inchesOf } from "../src/shared/outputs.ts";
 
 const sample = readFileSync(new URL("./fixtures/sample-cutlist.txt", import.meta.url), "utf8");
 const p = parseCutlist(sample);
@@ -132,9 +133,10 @@ test("drawer order rows come from the drawer boxes, with the front size left bla
   const rows = drawerRows(p);
   assert.equal(rows.length, 14);
   assert.equal(rows.reduce((t, r) => t + r.qty, 0), 15);          // 13 boxes + 2 pull-outs
-  assert.deepEqual(rows[0], { ...(await import("../src/shared/outputs.ts")).blankDrawerLine(), qty: 1, height: "11 5/8", width: "35 7/8", depth: "21" });
+  assert.deepEqual(rows[0], { ...(await import("../src/shared/outputs.ts")).blankDrawerLine(), qty: 1, height: "11 5/8", width: "35 7/8", depth: "21", bottom38: true });
   assert.ok(rows.at(-1)!.pulloutNoScoop && rows.at(-1)!.ears && rows.at(-1)!.note === "");
   assert.ok(rows.slice(0, -1).every((r) => !r.pulloutNoScoop && !r.ears));
+  assert.ok(rows.at(-1)!.bottom38);
   assert.equal(drawerRows(p, false).length, 13);
   assert.ok(rows.every((r) => r.front === ""));
 });
@@ -151,4 +153,19 @@ test("drawer depths snap to undermount slide sizes, pull-outs keep theirs", asyn
   assert.ok(rows.every(depthMatchesSlide));
   assert.equal(inchesOf("20.5"), 20.5);
   assert.ok(!depthMatchesSlide({ ...rows[0], depth: "20 1/2" }));
+});
+
+test("drawers and pull-outs wider than the setting get the 3/8 bottom box", async () => {
+  const { drawerRows } = await import("../src/shared/outputs.ts");
+  const { cleanSettings } = await import("../src/shared/settings.ts");
+  const p = parseCutlist(readFileSync(new URL("./fixtures/sample-cutlist.txt", import.meta.url), "utf8"));
+  const wide = (min: number) => drawerRows(p, true, cleanSettings({ bottom38OverWidth: min })).filter((r) => r.bottom38).length;
+  const rows = drawerRows(p);                                       // default: over 20"
+  for (const r of rows) {
+    assert.equal(r.bottom38, (inchesOf(r.width) ?? 0) > 20);
+  }
+  assert.equal(wide(20), 9);          // 8 drawer rows plus the 35 1/2" pull-out
+  assert.ok(wide(30) < wide(20));
+  assert.equal(wide(100), 0);
+  assert.equal(cleanSettings({ bottom38OverWidth: "abc" }).bottom38OverWidth, 20);
 });

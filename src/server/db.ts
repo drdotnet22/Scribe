@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { Job, JobSummary } from "../shared/types.ts";
+import { cleanSettings, type AppSettings } from "../shared/settings.ts";
 
 /**
  * Storage: one SQLite file. Each job is stored as one JSON document plus a few
@@ -21,6 +22,7 @@ export function openDb(dataDir: string) {
       updated  INTEGER NOT NULL,
       data     TEXT NOT NULL
     )`);
+  db.exec("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
   return db;
 }
 export type Db = ReturnType<typeof openDb>;
@@ -52,3 +54,16 @@ export function jobsRepo(db: Db) {
   };
 }
 export type JobsRepo = ReturnType<typeof jobsRepo>;
+
+export function settingsRepo(db: Db) {
+  const get = db.prepare("SELECT value FROM settings WHERE key = 'app'");
+  const put = db.prepare("INSERT INTO settings (key, value) VALUES ('app', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+  return {
+    get: (): AppSettings => {
+      const row = get.get() as { value: string } | undefined;
+      try { return cleanSettings(row ? JSON.parse(row.value) : {}); } catch { return cleanSettings({}); }
+    },
+    save: (s: unknown): AppSettings => { const clean = cleanSettings(s); put.run(JSON.stringify(clean)); return clean; },
+  };
+}
+export type SettingsRepo = ReturnType<typeof settingsRepo>;

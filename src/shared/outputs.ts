@@ -6,6 +6,7 @@
 import type { CabRef, Dim, DrawerLine, DrawerOrderState, Job, OrderGroup, ParsedCutlist, PlyGroup, PlyRow } from "./types.ts";
 import type { Vars } from "./calc.ts";
 import { dim } from "./cutlist.ts";
+import { DEFAULT_SETTINGS, type AppSettings } from "./settings.ts";
 
 /** Materials that are dropped from the plywood cutlist unless the user turns them on. */
 export const DEFAULT_HIDDEN_MATERIALS = ["Undefined Material"];
@@ -191,9 +192,10 @@ export const blankDrawerLine = (): DrawerLine => ({
 /**
  * One row per drawer box size, straight from the cutlist. Box height is the end-piece width,
  * box width is the end-piece length, box depth is the side-piece length rounded up to the slide size.
+ * Drawers and pull-outs wider than the setting (20" by default) get the 3/8" bottom box ticked.
  * Pull-outs keep their own depth and get the Pullout and Ears boxes ticked. Front size is left blank.
  */
-export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerLine[] {
+export function drawerRows(p: ParsedCutlist, includePullouts = true, settings: AppSettings = DEFAULT_SETTINGS): DrawerLine[] {
   const rows = new Map<string, DrawerLine & { h: number; w: number }>();
   const add = (r: DrawerLine, h: number, w: number) => {
     const key = [r.height, r.width, r.depth, r.pulloutNoScoop].join("|");
@@ -205,7 +207,7 @@ export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerLine
   for (const row of boxes?.rows ?? []) {
     const end = row.columns["Ends"]?.[0], side = row.columns["Sides"]?.[0], bottom = row.columns["Bottoms"]?.[0];
     if (!end || !side) continue;
-    add({ ...blankDrawerLine(), qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: slideDepth(side.l) },
+    add({ ...blankDrawerLine(), qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: slideDepth(side.l), bottom38: end.l.inches > settings.bottom38OverWidth },
       end.w.inches, end.l.inches);
   }
 
@@ -214,7 +216,7 @@ export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerLine
     for (const row of po?.rows ?? []) {
       const end = row.columns["Ends"]?.[0], side = row.columns["Sides"]?.[0], bottom = row.columns["Bottoms"]?.[0];
       if (!end || !side) continue;
-      add({ ...blankDrawerLine(), qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: side.l.text, pulloutNoScoop: true, ears: true },
+      add({ ...blankDrawerLine(), qty: bottom?.qty ?? end.qty / 2, height: end.w.text, width: end.l.text, depth: side.l.text, pulloutNoScoop: true, ears: true, bottom38: end.l.inches > settings.bottom38OverWidth },
         end.w.inches, end.l.inches);
     }
   }
@@ -224,7 +226,7 @@ export function drawerRows(p: ParsedCutlist, includePullouts = true): DrawerLine
 }
 
 /** The rows that go on the form: the hand-edited list if there is one, otherwise the cutlist's. */
-export function drawerLines(job: Job, d: DrawerOrderState | undefined): DrawerLine[] {
+export function drawerLines(job: Job, d: DrawerOrderState | undefined, settings: AppSettings = DEFAULT_SETTINGS): DrawerLine[] {
   if (d?.rows) return d.rows;
-  return job.cutlist ? drawerRows(job.cutlist.parsed, d?.includePullouts ?? true) : [];
+  return job.cutlist ? drawerRows(job.cutlist.parsed, d?.includePullouts ?? true, settings) : [];
 }
