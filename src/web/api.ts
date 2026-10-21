@@ -57,3 +57,13 @@ export const sheetsApi = {
   remove: (sid: string) => call<{ ok: true }>(`/api/sheets/${sid}`, { method: "DELETE" }),
   downloadUrl: (sid: string) => `/api/sheets/${sid}/download`,
 };
+
+export interface NoteSyncResult { status: "idle" | "linked" | "missing"; text: string; action?: "created" | "pushed" | "adopted" | "conflict" | "same" }
+
+/** Joplin is optional: these only matter when the joplin container is set up. */
+export const joplinApi = {
+  status: () => call<{ enabled: boolean; reachable: boolean }>("/api/joplin/status"),
+  syncNote: (jobId: string, text: string, keepalive = false) =>
+    call<NoteSyncResult>(`/api/jobs/${jobId}/notes/sync`, { method: "POST", body: JSON.stringify({ text }), keepalive }),
+  relink: (jobId: string) => call<{ ok: true }>(`/api/jobs/${jobId}/notes/relink`, { method: "POST", body: "{}" }),
+};

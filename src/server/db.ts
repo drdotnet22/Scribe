@@ -33,6 +33,16 @@ export function openDb(dataDir: string) {
       data    BLOB NOT NULL
     )`);
   db.exec("CREATE INDEX IF NOT EXISTS sheets_job ON sheets (job_id)");
+  // Which Joplin note belongs to which job, and the text both sides last agreed on.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS joplin_links (
+      job_id       TEXT PRIMARY KEY,
+      folder_id    TEXT NOT NULL,
+      note_id      TEXT NOT NULL,
+      base         TEXT NOT NULL,
+      folder_title TEXT NOT NULL,
+      state        TEXT NOT NULL DEFAULT 'ok'
+    )`);
   db.exec("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
   return db;
 }
@@ -103,3 +113,18 @@ export function sheetsRepo(db: Db) {
   };
 }
 export type SheetsRepo = ReturnType<typeof sheetsRepo>;
+
+export interface JoplinLink { jobId: string; folderId: string; noteId: string; base: string; folderTitle: string; state: "ok" | "missing" }
+
+export function joplinLinksRepo(db: Db) {
+  const get = db.prepare("SELECT job_id AS jobId, folder_id AS folderId, note_id AS noteId, base, folder_title AS folderTitle, state FROM joplin_links WHERE job_id = ?");
+  const put = db.prepare(`INSERT INTO joplin_links (job_id, folder_id, note_id, base, folder_title, state) VALUES (@jobId, @folderId, @noteId, @base, @folderTitle, @state)
+    ON CONFLICT(job_id) DO UPDATE SET folder_id=@folderId, note_id=@noteId, base=@base, folder_title=@folderTitle, state=@state`);
+  const del = db.prepare("DELETE FROM joplin_links WHERE job_id = ?");
+  return {
+    get: (jobId: string) => get.get(jobId) as JoplinLink | undefined,
+    set: (link: JoplinLink) => { put.run(link); },
+    remove: (jobId: string) => { del.run(jobId); },
+  };
+}
+export type JoplinLinksRepo = ReturnType<typeof joplinLinksRepo>;

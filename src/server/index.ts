@@ -4,7 +4,8 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openDb, jobsRepo, settingsRepo, sheetsRepo } from "./db.ts";
+import { openDb, jobsRepo, joplinLinksRepo, settingsRepo, sheetsRepo } from "./db.ts";
+import { joplinClient, joplinEnabled, joplinReachable, relinkJobNote, syncJobNote } from "./joplin.ts";
 import { startBackups } from "./backup.ts";
 import { buildDrawerForm } from "./drawerForm.ts";
 import { buildDoorForm } from "./doorForm.ts";
@@ -24,6 +25,7 @@ const db = openDb(DATA_DIR);
 const jobs = jobsRepo(db);
 const settings = settingsRepo(db);
 const sheets = sheetsRepo(db);
+const joplinLinks = joplinLinksRepo(db);
 const app = Fastify({ logger: { level: "info" }, bodyLimit: 10 * 1024 * 1024 });
 
 // Spreadsheets are sent and received as raw .xlsx bytes.
@@ -94,7 +96,32 @@ app.put<{ Params: { id: string }; Body: Job }>("/api/jobs/:id", async (req, repl
 app.delete<{ Params: { id: string } }>("/api/jobs/:id", async (req, reply) => {
   if (!jobs.remove(req.params.id)) return reply.code(404).send({ error: "Job not found" });
   sheets.removeForJob(req.params.id);
+  joplinLinks.remove(req.params.id); // the Joplin notebook itself is left alone
   return { ok: true };
+});
+
+/* ---------- Joplin (optional: only when the joplin container is set up) ---------- */
+
+app.get("/api/joplin/status", async () => ({ enabled: joplinEnabled, reachable: await joplinReachable() }));
+
+// One sync per job at a time.
+const noteSyncs = new Map<string, Promise<unknown>>();
+app.post<{ Params: { id: string }; Body: { text?: string } }>("/api/jobs/:id/notes/sync", async (req, reply) => {
+  if (!joplinEnabled) return reply.code(404).send({ error: "Joplin is not set up." });
+  const job = jobs.get(req.params.id);
+  if (!job) return reply.code(404).send({ error: "Job not found" });
+  const text = typeof req.body?.text === "string" ? req.body.text : job.notes ?? "";
+  const run = (noteSyncs.get(job.id) ?? Promise.resolve()).catch(() => undefined).then(() => syncJobNote(joplinClient, joplinLinks, job, text));
+  noteSyncs.set(job.id, run);
+  try { return await run; }
+  catch (e) { return reply.code(502).send({ error: (e as Error).message }); }
+});
+
+/** After the Joplin note was deleted: make a new note in the same notebook (or a new notebook if that is gone too). */
+app.post<{ Params: { id: string } }>("/api/jobs/:id/notes/relink", async (req, reply) => {
+  if (!joplinEnabled) return reply.code(404).send({ error: "Joplin is not set up." });
+  try { await relinkJobNote(joplinClient, joplinLinks, req.params.id); return { ok: true }; }
+  catch (e) { return reply.code(502).send({ error: (e as Error).message }); }
 });
 
 /* ---------- spreadsheets (one .xlsx file each, edited in the browser) ---------- */

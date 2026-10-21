@@ -82,7 +82,7 @@ export function JobPage() {
         : current === "plywood"
         ? <PlywoodTab job={job} update={update} flush={flush} />
         : current === "notes"
-        ? <Suspense fallback={<main className="page muted">Loading…</main>}><NotesTab job={job} update={update} /></Suspense>
+        ? <Suspense fallback={<main className="page muted">Loading…</main>}><NotesTab job={job} update={update} flush={flush} /></Suspense>
         : current === "sheets"
         ? <Suspense fallback={<main className="page muted">Loading…</main>}><SheetsTab job={job} /></Suspense>
         : <div className="workspace"><div className="sheet"><DocView doc={current as DocName} job={job} vars={vars} onEdit={update} /></div></div>}

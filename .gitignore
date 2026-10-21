@@ -3,3 +3,5 @@ dist
 data
 *.log
 caddy-data
+.env
+joplin-data

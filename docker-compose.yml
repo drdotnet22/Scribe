@@ -8,6 +8,20 @@ services:
       - ./data:/data
     environment:
       TZ: America/New_York
+      JOPLIN_URL: ${JOPLIN_URL:-}   # set in .env to turn on the Joplin sync (see the README)
+    restart: unless-stopped
+
+  # Optional: keeps each job's notes in step with your Joplin. Only starts when .env has COMPOSE_PROFILES=joplin.
+  joplin:
+    profiles: ["joplin"]
+    build: ./joplin
+    volumes:
+      - ./joplin-data:/root/.config/joplin
+    environment:
+      TZ: America/New_York
+      JOPLIN_SERVER_URL: ${JOPLIN_SERVER_URL:-}
+      JOPLIN_USERNAME: ${JOPLIN_USERNAME:-}
+      JOPLIN_PASSWORD: ${JOPLIN_PASSWORD:-}
     restart: unless-stopped
 
   # HTTPS front door: https://scribe.local:5877 (see the README)

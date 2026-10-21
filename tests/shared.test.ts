@@ -285,3 +285,95 @@ test("plywood list: edited copy, totals, validation", async () => {
   const bad = plyRowIssues({ qty: 0, w: "", l: "9 1/64", part: "", refs: "" });
   assert.ok(bad.qty && bad.w && bad.l);
 });
+
+test("joplin note sync: every case, using a pretend Joplin", async () => {
+  const { mkdtempSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { openDb, joplinLinksRepo } = await import("../src/server/db.ts");
+  const { relinkJobNote, syncJobNote } = await import("../src/server/joplin.ts");
+  const { reconcileNote, notebookTitle } = await import("../src/shared/noteSync.ts");
+
+  assert.equal(reconcileNote("a", "a", "x").kind, "same");
+  assert.equal(reconcileNote("new", "old", "old").kind, "push");
+  assert.equal(reconcileNote("old", "new", "old").kind, "adopt");
+  assert.equal(reconcileNote("mine", "theirs", "old").kind, "conflict");
+  assert.equal(notebookTitle(" Smith kitchen "), "Smith kitchen - Scribe");
+
+  const folders = new Map<string, string>();
+  const notes = new Map<string, { folder: string; title: string; body: string; trashed?: boolean }>();
+  let syncs = 0, n = 0;
+  const client = {
+    async sync() { syncs++; },
+    async createFolder(t: string) { const id = `f${++n}`; folders.set(id, t); return id; },
+    async renameFolder(id: string, t: string) { folders.set(id, t); },
+    async folderExists(id: string) { return folders.has(id); },
+    async createNote(folder: string, title: string, body: string) { const id = `n${++n}`; notes.set(id, { folder, title, body }); return id; },
+    async getNote(id: string) { const x = notes.get(id); return x && !x.trashed ? { body: x.body } : null; },
+    async putNote(id: string, body: string) { notes.get(id)!.body = body; },
+  };
+
+  const dir = mkdtempSync(join(tmpdir(), "scribe-"));
+  const db = openDb(dir);
+  try {
+    const links = joplinLinksRepo(db);
+    const job = { id: "j1", title: "Smith kitchen" };
+
+    // nothing written yet: nothing created
+    let r = await syncJobNote(client, links, job, "");
+    assert.equal(r.status, "idle"); assert.equal(folders.size, 0);
+
+    // first text: a notebook "<title> - Scribe" with one note
+    r = await syncJobNote(client, links, job, "hello");
+    assert.equal(r.action, "created");
+    assert.deepEqual([...folders.values()], ["Smith kitchen - Scribe"]);
+    const noteId = links.get("j1")!.noteId;
+    assert.equal(notes.get(noteId)!.body, "hello");
+
+    // no changes
+    r = await syncJobNote(client, links, job, "hello");
+    assert.equal(r.action, "same");
+
+    // edited in Scribe
+    r = await syncJobNote(client, links, job, "hello world");
+    assert.equal(r.action, "pushed"); assert.equal(notes.get(noteId)!.body, "hello world");
+
+    // edited in Joplin: Scribe is told to take it, and the next sync finds both equal
+    notes.get(noteId)!.body = "from joplin";
+    r = await syncJobNote(client, links, job, "hello world");
+    assert.equal(r.action, "adopted"); assert.equal(r.text, "from joplin");
+    r = await syncJobNote(client, links, job, "from joplin");
+    assert.equal(r.action, "same"); assert.equal(links.get("j1")!.base, "from joplin");
+
+    // edited in both: Scribe's text wins, Joplin's is kept as a separate note
+    notes.get(noteId)!.body = "joplin side";
+    r = await syncJobNote(client, links, job, "scribe side");
+    assert.equal(r.action, "conflict"); assert.equal(r.text, "scribe side");
+    assert.equal(notes.get(noteId)!.body, "scribe side");
+    const copies = [...notes.values()].filter((x) => x.title.startsWith("Notes - Joplin version"));
+    assert.equal(copies.length, 1); assert.equal(copies[0].body, "joplin side");
+
+    // job renamed: the notebook is renamed too
+    r = await syncJobNote(client, links, { id: "j1", title: "Smith kitchen v2" }, "scribe side");
+    assert.deepEqual([...folders.values()], ["Smith kitchen v2 - Scribe"]);
+
+    // note deleted in Joplin: syncing pauses and nothing is recreated
+    notes.get(noteId)!.trashed = true;
+    r = await syncJobNote(client, links, job, "scribe side");
+    assert.equal(r.status, "missing");
+    const before = folders.size, syncsBefore = syncs;
+    r = await syncJobNote(client, links, job, "more text");
+    assert.equal(r.status, "missing"); assert.equal(folders.size, before); assert.equal(syncs, syncsBefore);
+    // "create it again": a new note in the same notebook, filled from Scribe on the next sync
+    await relinkJobNote(client, links, "j1");
+    assert.equal(folders.size, before);
+    r = await syncJobNote(client, links, job, "more text");
+    assert.equal(r.action, "pushed"); assert.equal(notes.get(links.get("j1")!.noteId)!.body, "more text");
+    // if the notebook is gone too, a new one is made
+    folders.clear();
+    await relinkJobNote(client, links, "j1");
+    assert.equal(links.get("j1"), undefined);
+    r = await syncJobNote(client, links, job, "more text");
+    assert.equal(r.action, "created"); assert.equal(folders.size, 1);
+  } finally { db.close(); rmSync(dir, { recursive: true, force: true }); }
+});

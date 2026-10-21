@@ -3,3 +3,6 @@ dist
 data
 .git
 caddy-data
+.env
+joplin-data
+joplin
