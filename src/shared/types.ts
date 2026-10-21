@@ -122,6 +122,8 @@ export interface Job {
   order: OrderState;
   drawerOrder?: DrawerOrderState;
   doorOrder?: DoorOrderState;
+  /** The plywood cutlist once edited by hand (otherwise it comes straight from the cutlist). */
+  plywood?: { groups: PlyEditGroup[] };
   /** Free-form markdown notes for the job. */
   notes?: string;
 }
@@ -142,6 +144,8 @@ export interface OrderGroup {
   sqft: number;
 }
 export interface PlyRow { qty: number; w: string; l: string; part: string; refs: string }
+/** A material and its parts as kept in a hand-edited plywood list. */
+export interface PlyEditGroup { material: string; rows: PlyRow[] }
 export interface PlyGroup { material: string; rows: PlyRow[]; pieces: number; sqft: number }
 
 /* ---------- comparing two cutlists ---------- */

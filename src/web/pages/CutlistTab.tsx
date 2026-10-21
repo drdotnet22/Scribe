@@ -207,6 +207,11 @@ export function CutlistTab({ job, update, replace, flush }: Props) {
         <p className="muted" style={{ marginBottom: 0 }}>
           Parts with no material ("Undefined Material") are left out by default. Drawer boxes and pull-outs are listed under their own materials.
         </p>
+        {job.plywood && (
+          <p className="error-text" style={{ marginBottom: 0 }}>
+            The plywood cutlist has been edited by hand, so these choices no longer change it. Use "Start over from the cutlist" on the Plywood cutlist tab to use them again.
+          </p>
+        )}
       </div>
 
       <div className="card" style={{ marginBottom: 14 }}>

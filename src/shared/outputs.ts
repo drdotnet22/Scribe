@@ -3,7 +3,7 @@
 //  - plywood (sheet goods) cutlists grouped by material and thickness
 //  - named numbers (door square feet ...) that invoice formulas can use
 
-import type { CabRef, Dim, DoorOrderState, DrawerLine, DrawerOrderState, Job, OrderGroup, SizeLine, ParsedCutlist, PlyGroup, PlyRow } from "./types.ts";
+import type { CabRef, Dim, DoorOrderState, DrawerLine, DrawerOrderState, Job, OrderGroup, SizeLine, ParsedCutlist, PlyEditGroup, PlyGroup, PlyRow } from "./types.ts";
 import type { Vars } from "./calc.ts";
 import { dim } from "./cutlist.ts";
 import { DEFAULT_SETTINGS, type AppSettings } from "./settings.ts";
@@ -128,6 +128,29 @@ export function plywoodGroups(p: ParsedCutlist, hidden: string[]): PlyGroup[] {
   }
   return groups.sort((a, b) => thickness(b.material) - thickness(a.material) || a.material.localeCompare(b.material));
 }
+
+/** Add up the pieces and square feet of a list of materials. Rows with a size that cannot be read count as zero area. */
+export function plywoodTotals(groups: PlyEditGroup[]): PlyGroup[] {
+  return groups.map((g) => ({
+    material: g.material, rows: g.rows,
+    pieces: g.rows.reduce((t, r) => t + (Number.isInteger(r.qty) && r.qty > 0 ? r.qty : 0), 0),
+    sqft: g.rows.reduce((t, r) => t + sqft(Number.isInteger(r.qty) && r.qty > 0 ? r.qty : 0, inchesOf(r.w) ?? 0, inchesOf(r.l) ?? 0), 0),
+  }));
+}
+
+/** The editable copy of the plywood list: the job's own edits, or what the cutlist gives right now. */
+export function plywoodEditable(job: Job): PlyEditGroup[] {
+  if (job.plywood) return job.plywood.groups;
+  return job.cutlist ? plywoodGroups(job.cutlist.parsed, job.cutlist.hiddenMaterials).map((g) => ({ material: g.material, rows: g.rows })) : [];
+}
+
+/** What the plywood tab and the printed cutlist show. */
+export function plywoodLines(job: Job): PlyGroup[] {
+  return job.plywood ? plywoodTotals(job.plywood.groups)
+    : job.cutlist ? plywoodGroups(job.cutlist.parsed, job.cutlist.hiddenMaterials) : [];
+}
+
+export const blankPlyRow = (): PlyRow => ({ qty: 1, w: "", l: "", part: "", refs: "" });
 
 /** "3/4 Birch VC" -> 0.75 so thicker stock lists first. */
 function thickness(material: string): number {

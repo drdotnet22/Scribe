@@ -143,11 +143,13 @@ tr:hover > td > .x, .rl:hover > .x, .x:focus-visible { opacity: 1; }
 .empty-doc { padding: .6in 0; text-align: center; color: var(--muted); }
 
 /* ---------- print ---------- */
+.print-only { display: none; }
 @page { size: Letter; margin: .5in; }
 @media print {
   html, body { background: #fff !important; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .no-print, .topbar, .tabs, .titlebar { display: none !important; }
+  .print-only { display: block !important; }
   .workspace { padding: 0; display: block; overflow: visible; }
   .sheet { width: auto; min-height: 0; padding: 0; box-shadow: none; }
 }

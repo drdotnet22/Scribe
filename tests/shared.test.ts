@@ -260,3 +260,28 @@ test("spreadsheets are stored per job as whole files and removed with the job", 
     assert.equal(sheets.list("jobB").length, 1);
   } finally { db.close(); rmSync(dir, { recursive: true, force: true }); }
 });
+
+test("plywood list: edited copy, totals, validation", async () => {
+  const { plywoodEditable, plywoodLines, plywoodTotals, blankPlyRow } = await import("../src/shared/outputs.ts");
+  const { plyRowIssues } = await import("../src/shared/validate.ts");
+  const { blankJob } = await import("../src/shared/invoice.ts");
+  const job = blankJob("p", "Plywood");
+  assert.deepEqual(plywoodLines(job), []);
+  job.cutlist = { raw: "", parsed: parseCutlist(readFileSync(new URL("./fixtures/sample-cutlist.txt", import.meta.url), "utf8")), hiddenMaterials: ["Undefined Material"] };
+  const fromCutlist = plywoodLines(job);
+  assert.ok(fromCutlist.length > 0);
+  const copy = structuredClone(plywoodEditable(job));
+  assert.equal(copy.length, fromCutlist.length);
+  copy[0].rows.push({ ...blankPlyRow(), qty: 2, w: "10 1/2", l: "20" });
+  job.plywood = { groups: copy };
+  const edited = plywoodLines(job);
+  assert.equal(edited[0].pieces, fromCutlist[0].pieces + 2);
+  assert.ok(Math.abs(edited[0].sqft - (fromCutlist[0].sqft + (2 * 10.5 * 20) / 144)) < 1e-9);
+  // bad rows count as zero rather than breaking the totals
+  const t = plywoodTotals([{ material: "X", rows: [{ qty: 1.5, w: "abc", l: "12", part: "", refs: "" }, { qty: 3, w: "10", l: "10", part: "", refs: "" }] }]);
+  assert.equal(t[0].pieces, 3);
+  assert.ok(Math.abs(t[0].sqft - 300 / 144) < 1e-9);
+  assert.deepEqual(plyRowIssues({ qty: 1, w: "10 1/2", l: "20", part: "", refs: "" }), { qty: undefined, w: undefined, l: undefined });
+  const bad = plyRowIssues({ qty: 0, w: "", l: "9 1/64", part: "", refs: "" });
+  assert.ok(bad.qty && bad.w && bad.l);
+});

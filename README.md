@@ -29,7 +29,8 @@ Keep `./caddy-data` (it holds the certificate authority; losing it means install
 5. **Door order**: fills in the supplier's door order form (xlsx). Door specs and contact details start from your defaults in Settings, sizes start from the cutlist (end panels get their own labelled section), then Download xlsx.
 6. **Notes** tab: free-form markdown notes for the job, saved as you type, with a live preview.
 7. **Sheets** tab: real spreadsheets (formulas, formatting) made with the IronCalc engine. One per job, created with a button, with as many sheets inside it as you like. It saves as you edit, download as .xlsx, and you can upload an existing .xlsx. Stored in the database as .xlsx files, so they are included in the daily database backup (but not in the `jobs-DATE.json` export).
-8. **Invoice** and **Plywood cutlist** tabs: Print, or Open PDF (made by headless Chromium so borders always print).
+8. **Plywood cutlist**: starts from the cutlist, grouped by material. Edit any quantity or size, add or remove parts and materials (sizes and quantities are checked). "Start over from the cutlist" discards your edits. Print or Open PDF uses the edited list.
+9. **Invoice** tab: Print, or Open PDF (made by headless Chromium so borders always print).
 
 ## Develop
 

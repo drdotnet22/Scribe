@@ -1,4 +1,4 @@
-import { plywoodGroups } from "../../shared/outputs.ts";
+import { plywoodLines } from "../../shared/outputs.ts";
 import { usDate } from "../../shared/invoice.ts";
 import { BUSINESS } from "../../shared/business.ts";
 import type { DocProps } from "./InvoiceDoc.tsx";
@@ -6,7 +6,7 @@ import type { DocProps } from "./InvoiceDoc.tsx";
 /** Plywood and other cut parts, grouped by material and thickness. */
 export function PlywoodDoc({ job }: DocProps) {
   const cut = job.cutlist;
-  const groups = cut ? plywoodGroups(cut.parsed, cut.hiddenMaterials) : [];
+  const groups = plywoodLines(job);
   const total = groups.reduce((t, g) => t + g.pieces, 0);
 
   return (
@@ -25,11 +25,11 @@ export function PlywoodDoc({ job }: DocProps) {
       </div>
 
       {!groups.length && (
-        <div className="empty-doc">No parts to show. Import a cutlist on the Cutlist tab.</div>
+        <div className="empty-doc">No parts to show.</div>
       )}
 
-      {groups.map((g) => (
-        <div className="grp" key={g.material}>
+      {groups.map((g, gi) => (
+        <div className="grp" key={gi}>
           <div className="gh">
             <div className="l1">
               <span>{g.material}</span>

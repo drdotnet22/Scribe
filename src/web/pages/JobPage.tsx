@@ -7,6 +7,7 @@ import { useJob } from "../useJob.ts";
 import { CutlistTab } from "./CutlistTab.tsx";
 import { DoorTab } from "./DoorTab.tsx";
 import { DrawerTab } from "./DrawerTab.tsx";
+import { PlywoodTab } from "./PlywoodTab.tsx";
 
 // Loaded only when opened: they bring in the markdown renderer and the spreadsheet engine.
 const NotesTab = lazy(() => import("./NotesTab.tsx").then((m) => ({ default: m.NotesTab })));
@@ -38,7 +39,7 @@ export function JobPage() {
   if (error) return (<><Topbar /><main className="page"><p className="error-text">{error}</p><Link to="/">Back to jobs</Link></main></>);
   if (!job) return (<><Topbar /><main className="page muted">Loading…</main></>);
 
-  const isDoc = current === "invoice" || current === "plywood";
+  const isDoc = current === "invoice";
   async function openPdf() {
     await flush();
     const url = `/api/jobs/${job!.id}/pdf/${current}`;
@@ -78,6 +79,8 @@ export function JobPage() {
         ? <DrawerTab job={job} update={update} flush={flush} />
         : current === "doors"
         ? <DoorTab job={job} update={update} flush={flush} />
+        : current === "plywood"
+        ? <PlywoodTab job={job} update={update} flush={flush} />
         : current === "notes"
         ? <Suspense fallback={<main className="page muted">Loading…</main>}><NotesTab job={job} update={update} /></Suspense>
         : current === "sheets"
