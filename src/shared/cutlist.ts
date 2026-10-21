@@ -37,6 +37,15 @@ const HEADINGS = [
 
 export function parseCutlist(text: string): ParsedCutlist {
   const lines = text.replace(/\r/g, "").split("\n");
+  // A long list of cabinets wraps onto the next line: "1[#9(1,2,3) ..." then "#11(1,2)]". Join them into the first line.
+  for (let i = 0; i < lines.length; i++) {
+    for (let n = 0; n < 4 && /\d+\[[^\]]*$/.test(lines[i]) && i + 1 < lines.length; n++) {
+      const next = lines[i + 1];
+      if (!next.trim() || / x /.test(next)) break;
+      lines[i] = `${lines[i].trimEnd()} ${next.trim()}`;
+      lines[i + 1] = "";
+    }
+  }
   const out: ParsedCutlist = { cabinetCount: 0, bodyParts: [], sections: [], warnings: [] };
   const cabinetIds = new Set<string>();
 

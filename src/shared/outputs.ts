@@ -75,7 +75,7 @@ function collectParts(p: ParsedCutlist): RawPart[] {
   // drawer boxes and pull-outs: each column has its own material in the section header
   const boxSections: { heading: string; prefix: string; cols: [string, string, string][] }[] = [
     { heading: "DRAWERS", prefix: "DRAWER", cols: [["Ends", "End", "END"], ["Sides", "Sides", "SIDE"], ["Bottoms", "Bottom", "BOTTOM"]] },
-    { heading: "PULL-OUTS", prefix: "PULL-OUT", cols: [["Fronts", "Front", "FRONT"], ["Ends", "End", "END"], ["Sides", "Sides", "SIDE"], ["Bottoms", "Bottom", "BOTTOM"]] },
+    { heading: "PULL-OUTS", prefix: "PULL-OUT", cols: [["Ends", "End", "END"], ["Sides", "Sides", "SIDE"], ["Bottoms", "Bottom", "BOTTOM"]] },
   ];
   for (const def of boxSections) {
     const s = p.sections.find((x) => x.heading === def.heading);

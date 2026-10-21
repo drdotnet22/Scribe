@@ -70,10 +70,11 @@ test("finished doors, drawer fronts and end panels", () => {
 });
 
 test("plywood cutlist groups by material and drops hidden materials", () => {
-  assert.deepEqual(materialsIn(p), ["Undefined Material", "1/4 Alma Ply", "3/8 Lauan Ply", "3/4 Birch VC", "9/16 Poplar", "3/8 Cherry"]);
+  assert.deepEqual(materialsIn(p), ["Undefined Material", "1/4 Alma Ply", "3/8 Lauan Ply", "3/4 Birch VC", "9/16 Poplar"]);
+  assert.ok(!plywoodGroups(p, []).some((g) => g.rows.some((r) => /FRONT/.test(r.part))), "pull-out fronts are not made");
   const groups = plywoodGroups(p, DEFAULT_HIDDEN_MATERIALS);
   assert.ok(!groups.some((x) => x.material === "Undefined Material"));
-  assert.deepEqual(groups.map((x) => x.material), ["3/4 Birch VC", "9/16 Poplar", "3/8 Cherry", "3/8 Lauan Ply", "1/4 Alma Ply"]);
+  assert.deepEqual(groups.map((x) => x.material), ["3/4 Birch VC", "9/16 Poplar", "3/8 Lauan Ply", "1/4 Alma Ply"]);
   const alma = groups.find((x) => x.material === "1/4 Alma Ply")!;
   assert.equal(alma.pieces, 6 + 13 + 2, "back panels + drawer bottoms + pull-out bottoms");
   const birch = groups.find((x) => x.material === "3/4 Birch VC")!;
@@ -448,4 +449,17 @@ test("invoice versions: copy, switch, rename and delete", async () => {
   assert.equal(job.invoice.cabinets[1].d, "");
   deleteInvoiceVersion(job);                                          // the last one stays
   assert.equal(invoiceVersionList(job).length, 1);
+});
+
+test("cabinet references that wrap onto a second line are joined", () => {
+  const txt = readFileSync(new URL("./fixtures/sample-cutlist.txt", import.meta.url), "utf8").replace(/\r/g, "");
+  const wrapped = txt.replace(
+    "  2) 3        x 36 3/8       2) 2 3/4    x 35 1/2       4) 2 3/4    x 21 1/2       2) 34 7/8   x 21 3/8       1[#2(1,2)]",
+    "  2) 3        x 36 3/8       2) 2 3/4    x 35 1/2       4) 2 3/4    x 21 1/2       2) 34 7/8   x 21 3/8       1[#2(1,2)\n                                                                                                                #11(1,2,3,4,5)]");
+  assert.notEqual(wrapped, txt);
+  const q = parseCutlist(wrapped);
+  assert.deepEqual(q.warnings, p.warnings);
+  const row = q.sections.find((s) => s.heading === "PULL-OUTS")!.rows[0];
+  assert.deepEqual(row.refs.map((r) => r.cabinet), ["2", "11"]);
+  assert.equal(row.columns["Fronts"][0].qty, 2);
 });
