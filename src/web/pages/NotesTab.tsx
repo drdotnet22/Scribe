@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import {
+  BlockTypeSelect, BoldItalicUnderlineToggles, CodeToggle, CreateLink, InsertTable, InsertThematicBreak, ListsToggle, MDXEditor,
+  UndoRedo, headingsPlugin, linkDialogPlugin, linkPlugin, listsPlugin, markdownShortcutPlugin, quotePlugin, tablePlugin,
+  thematicBreakPlugin, toolbarPlugin, type MDXEditorMethods,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
 import type { Job } from "../../shared/types.ts";
 import { joplinApi } from "../api.ts";
 
@@ -15,7 +19,7 @@ const IDLE_MS = 5_000;       // sync this long after you stop typing
 const POLL_MS = 90_000;      // while the tab stays open and you are not typing, look for changes made in Joplin
 const QUIET_MS = 10_000;
 
-/** Free-form markdown notes for the job: type on the left, see the result on the right. With Joplin set up, they sync both ways. */
+/** Free-form markdown notes for the job, edited in place with a toolbar. With Joplin set up, they sync both ways. */
 export function NotesTab({ job, update, flush }: Props) {
   const notes = job.notes ?? "";
   const [joplin, setJoplin] = useState<"off" | "down" | "on">("off");
@@ -94,13 +98,25 @@ export function NotesTab({ job, update, flush }: Props) {
     return () => clearInterval(t);
   }, [joplin]);
 
+  // The editor owns its text while you type. Text that arrives from elsewhere (Joplin) is pushed into it.
+  const editor = useRef<MDXEditorMethods>(null);
+  const emitted = useRef(notes);
+  useEffect(() => {
+    if (notes !== emitted.current) { emitted.current = notes; editor.current?.setMarkdown(notes); }
+  }, [notes]);
+  const onEdit = (md: string, initialNormalize: boolean) => {
+    if (initialNormalize || md === emitted.current) return;   // the editor tidying what it just loaded is not an edit
+    emitted.current = md;
+    update((j) => { j.notes = md; });
+  };
+
   const relink = async () => { await joplinApi.relink(job.id); setMissing(false); void runSync(); };
 
   return (
-    <main className="page" style={{ maxWidth: 1200 }}>
+    <main className="page">
       <h1>Notes</h1>
       <p className="muted" style={{ marginTop: -8 }}>
-        Saved with the job as you type. Markdown works: <code>#</code> headings, <code>**bold**</code>, <code>- lists</code>, <code>- [ ] to-do items</code> and <code>| tables |</code>.
+        Saved with the job as you type. Use the toolbar, or type markdown shortcuts like <code>#</code> for a heading, <code>-</code> for a list or <code>**bold**</code>.
       </p>
 
       {joplin === "down" && <p className="error-text" role="status">Joplin is set up, but the Joplin container is not answering right now. Notes are still saved in Scribe.</p>}
@@ -113,21 +129,25 @@ export function NotesTab({ job, update, flush }: Props) {
         </div>
       )}
 
-      <div className="notes-grid">
-        <label className="notes-pane">
-          <span className="muted">Write</span>
-          <textarea className="notes-edit" aria-label="Notes" value={notes} spellCheck
-            placeholder="Measurements, customer requests, things to remember…"
-            onChange={(e) => update((j) => { j.notes = e.target.value; })} />
-        </label>
-        <div className="notes-pane">
-          <span className="muted">Preview</span>
-          <div className="notes-preview card" aria-label="Notes preview">
-            {notes.trim()
-              ? <Markdown remarkPlugins={[remarkGfm]}>{notes}</Markdown>
-              : <p className="muted">Nothing here yet.</p>}
-          </div>
-        </div>
+      <div className="notes-editor">
+        <MDXEditor ref={editor} markdown={notes} onChange={onEdit} placeholder="Measurements, customer requests, things to remember…"
+          contentEditableClassName="notes-content" spellCheck
+          plugins={[
+            headingsPlugin(), listsPlugin(), quotePlugin(), thematicBreakPlugin(), linkPlugin(), linkDialogPlugin(), tablePlugin(),
+            markdownShortcutPlugin(),
+            toolbarPlugin({ toolbarContents: () => (
+              <>
+                <UndoRedo />
+                <BlockTypeSelect />
+                <BoldItalicUnderlineToggles options={["Bold", "Italic"]} />
+                <CodeToggle />
+                <ListsToggle options={["bullet", "number", "check"]} />
+                <CreateLink />
+                <InsertTable />
+                <InsertThematicBreak />
+              </>
+            ) }),
+          ]} />
       </div>
     </main>
   );

@@ -163,20 +163,6 @@ tr:hover > td > .x, .rl:hover > .x, .x:focus-visible { opacity: 1; }
 .topbar .navlink { color: var(--muted); text-decoration: none; font-size: 13px; }
 .topbar .navlink:hover { color: var(--accent); }
 
-/* ---- Notes tab ---- */
-.notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
-@media (max-width: 800px) { .notes-grid { grid-template-columns: 1fr; } }
-.notes-pane { display: grid; gap: 4px; min-width: 0; }
-.notes-edit { width: 100%; min-height: 60vh; resize: vertical; padding: 10px; border: 1px solid var(--line); border-radius: 8px;
-  font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; box-sizing: border-box; }
-.notes-preview { min-height: 60vh; overflow: auto; line-height: 1.5; }
-.notes-preview > :first-child { margin-top: 0; }
-.notes-preview table { border-collapse: collapse; }
-.notes-preview th, .notes-preview td { border: 1px solid var(--line); padding: 4px 8px; }
-.notes-preview pre { background: #f6f6f6; padding: 8px; border-radius: 6px; overflow: auto; }
-.notes-preview code { font-family: ui-monospace, Menlo, Consolas, monospace; }
-.notes-preview img { max-width: 100%; }
-
 /* ---- Sheets tab ---- */
 .sheet-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chip { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); cursor: pointer; font: inherit; }
@@ -204,3 +190,16 @@ tr:hover > td > .x, .rl:hover > .x, .x:focus-visible { opacity: 1; }
 .topbar .jobname { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 260px; }
 .topbar .jobname label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .topbar .jobname input { flex: 1; min-width: 0; max-width: 560px; font-weight: 700; font-size: 15px; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; background: #fff; }
+
+/* notes editor */
+.notes-editor { border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: hidden; }
+.notes-editor .mdxeditor { --baseFont: var(--font); }
+.notes-editor [role="toolbar"] { border-radius: 0; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
+.notes-content[contenteditable] { min-height: 55vh; }
+.notes-content { padding: 12px 16px; line-height: 1.5; font-size: 15px; }
+.notes-content > :first-child { margin-top: 0; }
+.notes-content table { border-collapse: collapse; }
+.notes-content th, .notes-content td { border: 1px solid var(--line); padding: 4px 8px; }
+.notes-content code { font-family: ui-monospace, Menlo, Consolas, monospace; background: #f3f1f7; padding: 1px 4px; border-radius: 4px; }
+.notes-content ul, .notes-content ol { padding-left: 1.5em; }
+.notes-content [role="checkbox"], .notes-content input[type="checkbox"] { margin-right: 6px; }
