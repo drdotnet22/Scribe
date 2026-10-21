@@ -1,20 +1,20 @@
 services:
   app:
     build: .
+    # Only reachable from the server itself; everyone else goes through Caddy.
     ports:
-      - "5877:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - ./data:/data
     environment:
       TZ: America/New_York
     restart: unless-stopped
 
-  # HTTPS front door: https://scribe.local (see the README)
+  # HTTPS front door: https://scribe.local:5877 (see the README)
   caddy:
     image: caddy:2
     ports:
-      - "80:80"
-      - "443:443"
+      - "5877:5877"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./caddy-data:/data

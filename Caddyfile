@@ -1,19 +1,20 @@
-# HTTPS for Scribe on your own network. Caddy makes a certificate from its own
-# certificate authority ("tls internal"); install caddy-data/.../root.crt on each computer once.
-
-scribe.local {
-	tls internal
-	encode zstd gzip
-	reverse_proxy app:3000
+# HTTPS for Scribe on your own network, on port 5877. Caddy makes a certificate from its own
+# certificate authority ("tls internal"); install root.crt on each computer once (see the README).
+{
+	auto_https disable_redirects
 }
 
-# Plain http: hand out the root certificate, send everything else to https.
-http://scribe.local {
+scribe.local:5877 {
+	tls internal
+	encode zstd gzip
+
+	# The public root certificate, to install on your computers.
 	handle /root.crt {
 		root * /data/caddy/pki/authorities/local
 		file_server
 	}
+
 	handle {
-		redir https://scribe.local{uri} permanent
+		reverse_proxy app:3000
 	}
 }
