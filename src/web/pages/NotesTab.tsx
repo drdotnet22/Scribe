@@ -132,6 +132,7 @@ export function NotesTab({ job, update, flush }: Props) {
       <div className="notes-editor">
         <MDXEditor ref={editor} markdown={notes} onChange={onEdit} placeholder="Measurements, customer requests, things to remember…"
           contentEditableClassName="notes-content" spellCheck
+          toMarkdownOptions={{ bullet: "-", bulletOther: "*", rule: "-" }}
           plugins={[
             headingsPlugin(), listsPlugin(), quotePlugin(), thematicBreakPlugin(), linkPlugin(), linkDialogPlugin(), tablePlugin(),
             markdownShortcutPlugin(),
