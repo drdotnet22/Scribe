@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { jobVars } from "../../shared/outputs.ts";
 import { api } from "../api.ts";
 import { DocView, Topbar, type DocName } from "../components.tsx";
@@ -28,6 +28,7 @@ const SAVE_TEXT = { idle: "", dirty: "Unsaved changes…", saving: "Saving…", 
 
 export function JobPage() {
   const { id, tab } = useParams();
+  const [query] = useSearchParams();
   const nav = useNavigate();
   const { job, error, save, update, replace, flush, discard } = useJob(id);
   const [sure, setSure] = useState(false);
@@ -35,14 +36,20 @@ export function JobPage() {
 
   if (!TABS.some((t) => t.key === tab)) return <Navigate to={`/jobs/${id}/invoice`} replace />;
   const current = tab as TabKey;
+  // Split view: the tab in the address is pinned on the left, ?right= is the one beside it.
+  const rightParam = query.get("right");
+  const right = TABS.some((t) => t.key === rightParam && t.key !== current) ? (rightParam as TabKey) : null;
+  const split = right !== null;
+  const firstOther = TABS.find((t) => t.key !== current)!.key;
+  const tabUrl = (key: TabKey) => split && key !== current ? `/jobs/${id}/${current}?right=${key}` : `/jobs/${id}/${key}`;
 
   if (error) return (<><Topbar /><main className="page"><p className="error-text">{error}</p><Link to="/">Back to jobs</Link></main></>);
   if (!job) return (<><Topbar /><main className="page muted">Loading…</main></>);
 
-  const isDoc = current === "invoice";
+  const isDoc = current === "invoice" || right === "invoice";
   async function openPdf() {
     await flush();
-    const url = `/api/jobs/${job!.id}/pdf/${current}`;
+    const url = `/api/jobs/${job!.id}/pdf/invoice`;
     if (!window.open(url, "_blank")) window.location.href = url;
   }
   async function remove() {
@@ -50,6 +57,22 @@ export function JobPage() {
     discard();
     await api.remove(job!.id);
     nav("/");
+  }
+
+  function renderTab(key: TabKey) {
+    return key === "cutlist"
+      ? <CutlistTab job={job!} update={update} replace={replace} flush={flush} />
+      : key === "drawers"
+      ? <DrawerTab job={job!} update={update} flush={flush} />
+      : key === "doors"
+      ? <DoorTab job={job!} update={update} flush={flush} />
+      : key === "plywood"
+      ? <PlywoodTab job={job!} update={update} flush={flush} />
+      : key === "notes"
+      ? <Suspense fallback={<main className="page muted">Loading…</main>}><NotesTab job={job!} update={update} flush={flush} /></Suspense>
+      : key === "sheets"
+      ? <Suspense fallback={<main className="page muted">Loading…</main>}><SheetsTab job={job!} /></Suspense>
+      : <div className="workspace"><div className="sheet"><DocView doc={key as DocName} job={job!} vars={vars} onEdit={update} /></div></div>;
   }
 
   return (
@@ -67,25 +90,24 @@ export function JobPage() {
         <button className={`btn danger${sure ? " sure" : ""}`} onClick={remove}>{sure ? "Click again to delete" : "Delete job"}</button>
       </div>
       <nav className="tabs no-print" aria-label="Job sections">
-        {TABS.map((t) => (
-          <Link key={t.key} to={`/jobs/${job.id}/${t.key}`} className={`tab${t.key === current ? " on" : ""}`}
-            aria-current={t.key === current ? "page" : undefined}>{t.label}</Link>
-        ))}
+        {TABS.map((t) => {
+          const pinned = split && t.key === current;
+          const on = split ? t.key === right : t.key === current;
+          return pinned
+            ? <span key={t.key} className="tab pinned" title="Pinned on the left">{t.label} <small>(left)</small></span>
+            : <Link key={t.key} to={tabUrl(t.key)} className={`tab${on ? " on" : ""}`} aria-current={on ? "page" : undefined}>{t.label}</Link>;
+        })}
+        {split
+          ? <Link className="tab split-btn" to={`/jobs/${job.id}/${current}`}>Cancel split tabs</Link>
+          : <Link className="tab split-btn" to={`/jobs/${job.id}/${current}?right=${firstOther}`}>Split tabs</Link>}
       </nav>
 
-      {current === "cutlist"
-        ? <CutlistTab job={job} update={update} replace={replace} flush={flush} />
-        : current === "drawers"
-        ? <DrawerTab job={job} update={update} flush={flush} />
-        : current === "doors"
-        ? <DoorTab job={job} update={update} flush={flush} />
-        : current === "plywood"
-        ? <PlywoodTab job={job} update={update} flush={flush} />
-        : current === "notes"
-        ? <Suspense fallback={<main className="page muted">Loading…</main>}><NotesTab job={job} update={update} flush={flush} /></Suspense>
-        : current === "sheets"
-        ? <Suspense fallback={<main className="page muted">Loading…</main>}><SheetsTab job={job} /></Suspense>
-        : <div className="workspace"><div className="sheet"><DocView doc={current as DocName} job={job} vars={vars} onEdit={update} /></div></div>}
+      {split
+        ? <div className="split">
+            <div className="pane" aria-label="Left pane">{renderTab(current)}</div>
+            <div className="pane" aria-label="Right pane">{renderTab(right!)}</div>
+          </div>
+        : renderTab(current)}
     </>
   );
 }

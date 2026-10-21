@@ -182,3 +182,13 @@ tr:hover > td > .x, .rl:hover > .x, .x:focus-visible { opacity: 1; }
 .chip { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); cursor: pointer; font: inherit; }
 .chip.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .sheet-host { height: calc(100vh - 370px); min-height: 420px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; position: relative; }
+
+/* split tabs */
+.split-btn { margin-left: auto; font-weight: 600; white-space: nowrap; }
+.tab.pinned { color: var(--muted); cursor: default; }
+.tab.pinned small { font-weight: 400; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.split .pane { overflow: auto; height: calc(100vh - 140px); min-width: 0; }
+.split .pane + .pane { border-left: 2px solid var(--line); }
+.split .sheet-host { height: calc(100vh - 420px); }
+@media print { .split { display: block; } .split .pane { height: auto; overflow: visible; } }
