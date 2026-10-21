@@ -29,3 +29,31 @@ export const api = {
   compareCutlist: (id: string, text: string) =>
     call<CutlistComparison>(`/api/jobs/${id}/cutlist/compare`, { method: "POST", body: JSON.stringify({ text }) }),
 };
+
+export interface SheetInfo { id: string; jobId: string; name: string; updated: number }
+
+async function raw(url: string, init?: RequestInit): Promise<Response> {
+  const res = await fetch(url, init);
+  if (!res.ok) {
+    let msg = `Something went wrong (${res.status})`;
+    try { msg = (await res.json()).error ?? msg; } catch { /* keep default */ }
+    throw new Error(msg);
+  }
+  return res;
+}
+
+/** Spreadsheets are exchanged as raw .xlsx bytes. */
+export const sheetsApi = {
+  list: (jobId: string) => call<SheetInfo[]>(`/api/jobs/${jobId}/sheets`),
+  create: async (jobId: string, name: string, bytes: Uint8Array): Promise<SheetInfo> =>
+    (await raw(`/api/jobs/${jobId}/sheets?name=${encodeURIComponent(name)}`, {
+      method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: bytes as BodyInit,
+    })).json(),
+  load: async (sid: string): Promise<Uint8Array> => new Uint8Array(await (await raw(`/api/sheets/${sid}/file`)).arrayBuffer()),
+  save: async (sid: string, bytes: Uint8Array, keepalive = false): Promise<void> => {
+    await raw(`/api/sheets/${sid}/file`, { method: "PUT", headers: { "Content-Type": "application/octet-stream" }, body: bytes as BodyInit, keepalive });
+  },
+  rename: (sid: string, name: string) => call<SheetInfo>(`/api/sheets/${sid}`, { method: "PATCH", body: JSON.stringify({ name }) }),
+  remove: (sid: string) => call<{ ok: true }>(`/api/sheets/${sid}`, { method: "DELETE" }),
+  downloadUrl: (sid: string) => `/api/sheets/${sid}/download`,
+};

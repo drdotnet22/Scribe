@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openDb, jobsRepo, settingsRepo } from "./db.ts";
+import { openDb, jobsRepo, settingsRepo, sheetsRepo } from "./db.ts";
 import { startBackups } from "./backup.ts";
 import { buildDrawerForm } from "./drawerForm.ts";
 import { buildDoorForm } from "./doorForm.ts";
@@ -23,7 +23,11 @@ const WEB_DIR = process.env.WEB_DIR ? resolve(process.env.WEB_DIR) : join(here, 
 const db = openDb(DATA_DIR);
 const jobs = jobsRepo(db);
 const settings = settingsRepo(db);
+const sheets = sheetsRepo(db);
 const app = Fastify({ logger: { level: "info" }, bodyLimit: 10 * 1024 * 1024 });
+
+// Spreadsheets are sent and received as raw .xlsx bytes.
+app.addContentTypeParser("application/octet-stream", { parseAs: "buffer", bodyLimit: 20 * 1024 * 1024 }, (_req, body, done) => done(null, body));
 
 startBackups(db, jobs, DATA_DIR, (m) => app.log.info(m));
 
@@ -87,8 +91,59 @@ app.put<{ Params: { id: string }; Body: Job }>("/api/jobs/:id", async (req, repl
   return { updated: body.updated };
 });
 
-app.delete<{ Params: { id: string } }>("/api/jobs/:id", async (req, reply) =>
-  jobs.remove(req.params.id) ? { ok: true } : reply.code(404).send({ error: "Job not found" }));
+app.delete<{ Params: { id: string } }>("/api/jobs/:id", async (req, reply) => {
+  if (!jobs.remove(req.params.id)) return reply.code(404).send({ error: "Job not found" });
+  sheets.removeForJob(req.params.id);
+  return { ok: true };
+});
+
+/* ---------- spreadsheets (one .xlsx file each, edited in the browser) ---------- */
+
+const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+/** An .xlsx file is a zip archive, which always starts with "PK". */
+const isXlsx = (b: unknown): b is Buffer => Buffer.isBuffer(b) && b.length > 4 && b[0] === 0x50 && b[1] === 0x4b;
+const cleanName = (n: unknown) => (typeof n === "string" ? n.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) : "");
+
+app.get<{ Params: { id: string } }>("/api/jobs/:id/sheets", async (req, reply) =>
+  jobs.get(req.params.id) ? sheets.list(req.params.id) : reply.code(404).send({ error: "Job not found" }));
+
+app.post<{ Params: { id: string }; Querystring: { name?: string }; Body: Buffer }>("/api/jobs/:id/sheets", async (req, reply) => {
+  if (!jobs.get(req.params.id)) return reply.code(404).send({ error: "Job not found" });
+  if (!isXlsx(req.body)) return reply.code(422).send({ error: "That is not an .xlsx file." });
+  const id = randomUUID();
+  sheets.add(id, req.params.id, cleanName(req.query.name) || "Sheet", req.body);
+  return sheets.info(id);
+});
+
+app.get<{ Params: { sid: string } }>("/api/sheets/:sid/file", async (req, reply) => {
+  const bytes = sheets.data(req.params.sid);
+  return bytes ? reply.header("Content-Type", "application/octet-stream").header("Cache-Control", "no-store").send(bytes)
+    : reply.code(404).send({ error: "Spreadsheet not found" });
+});
+
+app.get<{ Params: { sid: string } }>("/api/sheets/:sid/download", async (req, reply) => {
+  const info = sheets.info(req.params.sid), bytes = sheets.data(req.params.sid);
+  if (!info || !bytes) return reply.code(404).send({ error: "Spreadsheet not found" });
+  const job = jobs.get(info.jobId);
+  const name = `${[job?.title, info.name].filter(Boolean).join(" - ")}.xlsx`.replace(/[\\/:*?"<>|]+/g, " ");
+  return reply.header("Content-Type", XLSX_TYPE).header("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(name)}`).send(bytes);
+});
+
+app.put<{ Params: { sid: string }; Body: Buffer }>("/api/sheets/:sid/file", async (req, reply) => {
+  if (!sheets.info(req.params.sid)) return reply.code(404).send({ error: "Spreadsheet not found" });
+  if (!isXlsx(req.body)) return reply.code(422).send({ error: "That is not an .xlsx file." });
+  sheets.saveData(req.params.sid, req.body);
+  return { ok: true };
+});
+
+app.patch<{ Params: { sid: string }; Body: { name?: string } }>("/api/sheets/:sid", async (req, reply) => {
+  const name = cleanName(req.body?.name);
+  if (!name) return reply.code(400).send({ error: "Give the spreadsheet a name." });
+  return sheets.rename(req.params.sid, name) ? sheets.info(req.params.sid) : reply.code(404).send({ error: "Spreadsheet not found" });
+});
+
+app.delete<{ Params: { sid: string } }>("/api/sheets/:sid", async (req, reply) =>
+  sheets.remove(req.params.sid) ? { ok: true } : reply.code(404).send({ error: "Spreadsheet not found" }));
 
 /** Show what a new cutlist would change, without changing anything. */
 app.post<{ Params: { id: string }; Body: { text?: string } }>("/api/jobs/:id/cutlist/compare", async (req, reply) => {

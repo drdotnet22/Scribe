@@ -160,3 +160,23 @@ tr:hover > td > .x, .rl:hover > .x, .x:focus-visible { opacity: 1; }
 .review { scroll-margin-top: 64px; }
 .topbar .navlink { color: var(--muted); text-decoration: none; font-size: 13px; }
 .topbar .navlink:hover { color: var(--accent); }
+
+/* ---- Notes tab ---- */
+.notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+@media (max-width: 800px) { .notes-grid { grid-template-columns: 1fr; } }
+.notes-pane { display: grid; gap: 4px; min-width: 0; }
+.notes-edit { width: 100%; min-height: 60vh; resize: vertical; padding: 10px; border: 1px solid var(--line); border-radius: 8px;
+  font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; box-sizing: border-box; }
+.notes-preview { min-height: 60vh; overflow: auto; line-height: 1.5; }
+.notes-preview > :first-child { margin-top: 0; }
+.notes-preview table { border-collapse: collapse; }
+.notes-preview th, .notes-preview td { border: 1px solid var(--line); padding: 4px 8px; }
+.notes-preview pre { background: #f6f6f6; padding: 8px; border-radius: 6px; overflow: auto; }
+.notes-preview code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+.notes-preview img { max-width: 100%; }
+
+/* ---- Sheets tab ---- */
+.sheet-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); cursor: pointer; font: inherit; }
+.chip.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.sheet-host { height: calc(100vh - 370px); min-height: 420px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; position: relative; }

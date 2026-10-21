@@ -233,3 +233,30 @@ test("size and quantity validation", async () => {
   assert.ok(drawerLineIssues({ ...blankDrawerLine(), height: "4", width: "12" }).depth);
   assert.ok(drawerLineIssues({ ...blankDrawerLine(), scallop: "9/64" }).scallop);
 });
+
+test("spreadsheets are stored per job as whole files and removed with the job", async () => {
+  const { mkdtempSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { openDb, sheetsRepo } = await import("../src/server/db.ts");
+  const dir = mkdtempSync(join(tmpdir(), "scribe-"));
+  const db = openDb(dir);
+  try {
+    const sheets = sheetsRepo(db);
+    const bytes = Buffer.from([0x50, 0x4b, 3, 4, 9, 9, 9]);
+    sheets.add("s1", "jobA", "Costs", bytes);
+    sheets.add("s2", "jobA", "Cuts", bytes);
+    sheets.add("s3", "jobB", "Other", bytes);
+    assert.deepEqual(sheets.list("jobA").map((s) => s.name), ["Costs", "Cuts"]);
+    assert.deepEqual([...sheets.data("s1")!], [...bytes]);
+    assert.ok(sheets.saveData("s1", Buffer.from([0x50, 0x4b, 1, 1, 1])));
+    assert.equal(sheets.data("s1")!.length, 5);
+    assert.ok(sheets.rename("s2", "Cutting"));
+    assert.equal(sheets.info("s2")?.name, "Cutting");
+    assert.ok(sheets.remove("s2"));
+    assert.equal(sheets.remove("s2"), false);
+    sheets.removeForJob("jobA");
+    assert.equal(sheets.list("jobA").length, 0);
+    assert.equal(sheets.list("jobB").length, 1);
+  } finally { db.close(); rmSync(dir, { recursive: true, force: true }); }
+});

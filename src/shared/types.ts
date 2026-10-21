@@ -122,6 +122,8 @@ export interface Job {
   order: OrderState;
   drawerOrder?: DrawerOrderState;
   doorOrder?: DoorOrderState;
+  /** Free-form markdown notes for the job. */
+  notes?: string;
 }
 export interface JobSummary { id: string; title: string; customer: string; updated: number }
 

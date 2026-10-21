@@ -22,6 +22,17 @@ export function openDb(dataDir: string) {
       updated  INTEGER NOT NULL,
       data     TEXT NOT NULL
     )`);
+  // Spreadsheets live in their own table as .xlsx files, so saving a job never re-sends them.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sheets (
+      id      TEXT PRIMARY KEY,
+      job_id  TEXT NOT NULL,
+      name    TEXT NOT NULL,
+      created INTEGER NOT NULL,
+      updated INTEGER NOT NULL,
+      data    BLOB NOT NULL
+    )`);
+  db.exec("CREATE INDEX IF NOT EXISTS sheets_job ON sheets (job_id)");
   db.exec("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
   return db;
 }
@@ -67,3 +78,28 @@ export function settingsRepo(db: Db) {
   };
 }
 export type SettingsRepo = ReturnType<typeof settingsRepo>;
+
+export interface SheetInfo { id: string; jobId: string; name: string; updated: number }
+
+/** Spreadsheets for a job: each one is a whole .xlsx file. */
+export function sheetsRepo(db: Db) {
+  const list = db.prepare("SELECT id, job_id AS jobId, name, updated FROM sheets WHERE job_id = ? ORDER BY created");
+  const info = db.prepare("SELECT id, job_id AS jobId, name, updated FROM sheets WHERE id = ?");
+  const data = db.prepare("SELECT data FROM sheets WHERE id = ?");
+  const insert = db.prepare("INSERT INTO sheets (id, job_id, name, created, updated, data) VALUES (?, ?, ?, ?, ?, ?)");
+  const setData = db.prepare("UPDATE sheets SET data = ?, updated = ? WHERE id = ?");
+  const setName = db.prepare("UPDATE sheets SET name = ?, updated = ? WHERE id = ?");
+  const del = db.prepare("DELETE FROM sheets WHERE id = ?");
+  const delJob = db.prepare("DELETE FROM sheets WHERE job_id = ?");
+  return {
+    list: (jobId: string) => list.all(jobId) as SheetInfo[],
+    info: (id: string) => info.get(id) as SheetInfo | undefined,
+    data: (id: string) => (data.get(id) as { data: Buffer } | undefined)?.data,
+    add: (id: string, jobId: string, name: string, bytes: Buffer) => { const now = Date.now(); insert.run(id, jobId, name, now, now, bytes); },
+    saveData: (id: string, bytes: Buffer) => setData.run(bytes, Date.now(), id).changes > 0,
+    rename: (id: string, name: string) => setName.run(name, Date.now(), id).changes > 0,
+    remove: (id: string) => del.run(id).changes > 0,
+    removeForJob: (jobId: string) => { delJob.run(jobId); },
+  };
+}
+export type SheetsRepo = ReturnType<typeof sheetsRepo>;

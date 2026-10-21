@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { cutlistVars } from "../../shared/outputs.ts";
 import { api } from "../api.ts";
@@ -8,12 +8,18 @@ import { CutlistTab } from "./CutlistTab.tsx";
 import { DoorTab } from "./DoorTab.tsx";
 import { DrawerTab } from "./DrawerTab.tsx";
 
+// Loaded only when opened: they bring in the markdown renderer and the spreadsheet engine.
+const NotesTab = lazy(() => import("./NotesTab.tsx").then((m) => ({ default: m.NotesTab })));
+const SheetsTab = lazy(() => import("./SheetsTab.tsx").then((m) => ({ default: m.SheetsTab })));
+
 const TABS = [
   { key: "invoice", label: "Invoice" },
   { key: "cutlist", label: "Cutlist" },
   { key: "doors", label: "Door order" },
   { key: "plywood", label: "Plywood cutlist" },
   { key: "drawers", label: "Drawer order" },
+  { key: "notes", label: "Notes" },
+  { key: "sheets", label: "Sheets" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -72,6 +78,10 @@ export function JobPage() {
         ? <DrawerTab job={job} update={update} flush={flush} />
         : current === "doors"
         ? <DoorTab job={job} update={update} flush={flush} />
+        : current === "notes"
+        ? <Suspense fallback={<main className="page muted">Loading…</main>}><NotesTab job={job} update={update} /></Suspense>
+        : current === "sheets"
+        ? <Suspense fallback={<main className="page muted">Loading…</main>}><SheetsTab job={job} /></Suspense>
         : <div className="workspace"><div className="sheet"><DocView doc={current as DocName} job={job} vars={vars} onEdit={update} /></div></div>}
     </>
   );
