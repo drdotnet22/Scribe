@@ -2,9 +2,22 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "5877:3000"
     volumes:
       - ./data:/data
     environment:
       TZ: America/New_York
+    restart: unless-stopped
+
+  # HTTPS front door: https://scribe.local (see the README)
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy-data:/data
+    depends_on:
+      - app
     restart: unless-stopped

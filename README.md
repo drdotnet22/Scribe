@@ -8,7 +8,17 @@ Invoices, cutlist import, door/drawer-front order form and plywood cutlist.
 
     docker compose up -d --build
 
-Open http://SERVER:3000. Data lives in `./data` (SQLite file `app.db`, plus a daily backup in `./data/backups`, 30 days kept). Back up the `data` folder.
+Open https://scribe.local (see below) or http://SERVER:5877. Data lives in `./data` (SQLite file `app.db`, plus a daily backup in `./data/backups`, 30 days kept). Back up the `data` folder.
+
+## HTTPS at https://scribe.local
+
+The `caddy` container serves Scribe over HTTPS using its own certificate authority. Nothing goes to the internet.
+
+1. **Make the name resolve.** Add a DNS entry on your router for `scribe.local` pointing at the server's IP. If the router cannot, add `SERVER-IP  scribe.local` to `C:\Windows\System32\drivers\etc\hosts` on each computer (open Notepad as administrator).
+2. **Trust the certificate, once per computer.** Get `root.crt` from `./caddy-data/caddy/pki/authorities/local/root.crt` on the server, or open http://scribe.local/root.crt. On Windows, double-click it, choose Install Certificate, Local Machine, Place all certificates in the following store, Trusted Root Certification Authorities. Restart the browser. Firefox keeps its own store: Settings, Certificates, View Certificates, Authorities, Import.
+3. Open https://scribe.local. The padlock should be closed and downloads stop warning.
+
+Keep `./caddy-data` (it holds the certificate authority; losing it means installing a new root.crt everywhere). It is not committed to git.
 
 ## Using it
 
