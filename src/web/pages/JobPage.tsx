@@ -1,5 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from "react";
+import type { Job } from "../../shared/types.ts";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { activeInvoiceId, deleteInvoiceVersion, invoiceVersionList, newInvoiceVersion, renameInvoiceVersion, switchInvoice } from "../../shared/invoice.ts";
 import { jobVars } from "../../shared/outputs.ts";
 import { api } from "../api.ts";
 import { DocView, Topbar, type DocName } from "../components.tsx";
@@ -72,7 +74,10 @@ export function JobPage() {
       ? <Suspense fallback={<main className="page muted">Loading…</main>}><NotesTab job={job!} update={update} flush={flush} /></Suspense>
       : key === "sheets"
       ? <Suspense fallback={<main className="page muted">Loading…</main>}><SheetsTab job={job!} /></Suspense>
-      : <div className="workspace"><div className="sheet"><DocView doc={key as DocName} job={job!} vars={vars} onEdit={update} /></div></div>;
+      : <>
+          <VersionBar job={job!} update={update} flush={flush} />
+          <div className="workspace"><div className="sheet"><DocView doc={key as DocName} job={job!} vars={vars} onEdit={update} /></div></div>
+        </>;
   }
 
   return (
@@ -109,5 +114,52 @@ export function JobPage() {
           </div>
         : renderTab(current)}
     </>
+  );
+}
+
+type Update = (edit: (j: Job) => void) => void;
+
+/** Pick, copy, rename or remove versions of the invoice. */
+function VersionBar({ job, update, flush }: { job: Job; update: Update; flush: () => Promise<void> }) {
+  const [mode, setMode] = useState<"" | "new" | "rename">("");
+  const [name, setName] = useState("");
+  const [sure, setSure] = useState(false);
+  const list = invoiceVersionList(job);
+  const active = activeInvoiceId(job);
+  const current = list.find((v) => v.id === active)!;
+
+  const open = (m: "new" | "rename") => { setMode(m); setName(m === "rename" ? current.name : ""); };
+  const done = () => {
+    if (mode === "new") update((j) => newInvoiceVersion(j, name));
+    else if (mode === "rename") update((j) => renameInvoiceVersion(j, name));
+    setMode("");
+  };
+  const remove = () => {
+    if (!sure) { setSure(true); setTimeout(() => setSure(false), 4000); return; }
+    update((j) => deleteInvoiceVersion(j)); setSure(false);
+  };
+
+  return (
+    <div className="versionbar no-print">
+      <label htmlFor="inv-version">Invoice version</label>
+      <select id="inv-version" value={active} disabled={!!mode}
+        onChange={(e) => { const id = e.target.value; update((j) => switchInvoice(j, id)); void flush(); }}>
+        {list.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+      </select>
+      {mode ? (
+        <form onSubmit={(e) => { e.preventDefault(); done(); }}>
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} aria-label="Version name"
+            placeholder={mode === "new" ? "What is different, e.g. Added pantry cabinet" : "Version name"} />
+          <button className="btn primary" type="submit">{mode === "new" ? "Create copy" : "Save name"}</button>
+          <button className="btn" type="button" onClick={() => setMode("")}>Cancel</button>
+        </form>
+      ) : (
+        <>
+          <button className="btn" onClick={() => open("new")}>New version from this one</button>
+          <button className="btn" onClick={() => open("rename")}>Rename</button>
+          {list.length > 1 && <button className={`btn danger${sure ? " sure" : ""}`} onClick={remove}>{sure ? "Click again to delete" : "Delete this version"}</button>}
+        </>
+      )}
+    </div>
   );
 }

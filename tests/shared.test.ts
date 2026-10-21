@@ -427,3 +427,25 @@ test("cutlist numbers follow hand edits to the door, drawer and plywood lists", 
 function jobTotalsDrawer() {
   return { qty: 1, height: "4", width: "18", depth: "21", bottom38: false, pulloutNoScoop: false, pulloutScoop: false, ears: false, scallop: "", partsOnly: false, note: "" } as never;
 }
+
+test("invoice versions: copy, switch, rename and delete", async () => {
+  const { blankJob, newInvoiceVersion, switchInvoice, renameInvoiceVersion, deleteInvoiceVersion, invoiceVersionList, activeInvoiceId } = await import("../src/shared/invoice.ts");
+  const job = blankJob("x", "t");
+  assert.deepEqual(invoiceVersionList(job).map((v) => v.name), ["Original"]);
+  job.invoice.name = "Smith"; job.invoice.cabinets[0] = { d: "Vanity", a: "100" };
+  newInvoiceVersion(job, "Added pantry");
+  assert.equal(job.invoice.cabinets[0].d, "Vanity");                  // copied from the open one
+  job.invoice.cabinets[1] = { d: "Pantry", a: "500" };
+  assert.deepEqual(invoiceVersionList(job).map((v) => v.name), ["Original", "Added pantry"]);
+  switchInvoice(job, "v1");
+  assert.equal(job.invoice.cabinets[1].d, "");                        // the first version kept its own contents
+  switchInvoice(job, "v2");
+  assert.equal(job.invoice.cabinets[1].d, "Pantry");                  // and the edits to the copy were kept
+  renameInvoiceVersion(job, "With pantry");
+  assert.equal(invoiceVersionList(job)[1].name, "With pantry");
+  deleteInvoiceVersion(job);
+  assert.equal(activeInvoiceId(job), "v1");
+  assert.equal(job.invoice.cabinets[1].d, "");
+  deleteInvoiceVersion(job);                                          // the last one stays
+  assert.equal(invoiceVersionList(job).length, 1);
+});

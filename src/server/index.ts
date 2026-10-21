@@ -13,7 +13,7 @@ import { closeBrowser, renderPdf } from "./pdf.ts";
 import { parseCutlist, personName } from "../shared/cutlist.ts";
 import { hiddenByDefault, materialsIn } from "../shared/outputs.ts";
 import { carriedHidden, compareCutlists } from "../shared/diff.ts";
-import { blankDoorOrder, blankDrawerOrder, blankJob } from "../shared/invoice.ts";
+import { activeInvoiceName, blankDoorOrder, blankDrawerOrder, blankJob, invoiceVersionList } from "../shared/invoice.ts";
 import type { Job } from "../shared/types.ts";
 
 const PORT = Number(process.env.PORT ?? 3000);
@@ -245,7 +245,9 @@ app.get<{ Params: { id: string; doc: string } }>("/api/jobs/:id/pdf/:doc", async
   if (!job || !DOC_NAMES[doc]) return reply.code(404).send({ error: "Not found" });
   try {
     const pdf = await renderPdf(`http://127.0.0.1:${PORT}/print/${id}/${doc}`);
-    const name = `${job.title.replace(/[\\/:*?"<>|]+/g, "").trim() || "Job"} - ${DOC_NAMES[doc]}.pdf`;
+    const clean = (t: string) => t.replace(/[\\/:*?"<>|]+/g, "").trim();
+    const version = doc === "invoice" && invoiceVersionList(job).length > 1 ? ` (${clean(activeInvoiceName(job))})` : "";
+    const name = `${clean(job.title) || "Job"} - ${DOC_NAMES[doc]}${version}.pdf`;
     return reply
       .header("Content-Type", "application/pdf")
       .header("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(name)}`)

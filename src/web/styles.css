@@ -192,3 +192,10 @@ tr:hover > td > .x, .rl:hover > .x, .x:focus-visible { opacity: 1; }
 .split .pane + .pane { border-left: 2px solid var(--line); }
 .split .sheet-host { height: calc(100vh - 420px); }
 @media print { .split { display: block; } .split .pane { height: auto; overflow: visible; } }
+
+/* invoice versions */
+.versionbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px 20px 0; max-width: 980px; margin: 0 auto; }
+.versionbar label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.versionbar select, .versionbar input { border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; background: #fff; font-size: 14px; }
+.versionbar form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.versionbar form input { min-width: 300px; }

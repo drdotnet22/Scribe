@@ -112,12 +112,17 @@ export interface DrawerLine {
   note: string;                     // comments
 }
 
+export interface InvoiceVersion { id: string; name: string; invoice: InvoiceData }
+
 export interface Job {
   id: string;
   title: string;                    // the invoice name; also the name used for files
   created: number;
   updated: number;
-  invoice: InvoiceData;
+  invoice: InvoiceData;             // the version that is open now
+  /** Named versions of the invoice. The open one lives in `invoice`; its copy in this list is only refreshed when you switch away. */
+  invoiceVersions?: InvoiceVersion[];
+  activeInvoice?: string;           // id of the open version
   cutlist?: CutlistState;
   order: OrderState;
   drawerOrder?: DrawerOrderState;
