@@ -26,7 +26,7 @@ function NewJobDialog({ onClose }: { onClose: () => void }) {
       onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}>
       <form onSubmit={create}>
         <h2 id="nj-h">New job</h2>
-        <label htmlFor="nj-title">Invoice name</label>
+        <label htmlFor="nj-title">Job name</label>
         <input id="nj-title" type="text" autoFocus value={title} onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Soule - Second bath" autoComplete="off" />
         <label htmlFor="nj-file">Cutlist (optional)</label>

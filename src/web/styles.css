@@ -199,3 +199,8 @@ tr:hover > td > .x, .rl:hover > .x, .x:focus-visible { opacity: 1; }
 .versionbar select, .versionbar input { border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; background: #fff; font-size: 14px; }
 .versionbar form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .versionbar form input { min-width: 300px; }
+
+/* job name lives in the top bar */
+.topbar .jobname { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 260px; }
+.topbar .jobname label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.topbar .jobname input { flex: 1; min-width: 0; max-width: 560px; font-weight: 700; font-size: 15px; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; background: #fff; }

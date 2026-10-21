@@ -83,17 +83,17 @@ export function JobPage() {
   return (
     <>
       <Topbar>
+        <div className="jobname">
+          <label htmlFor="job-title">Job name</label>
+          <input id="job-title" value={job.title} autoComplete="off"
+            onChange={(e) => update((j) => { j.title = e.target.value; })} />
+        </div>
         <span className={`status${save === "error" ? " error" : ""}`} role="status">{SAVE_TEXT[save]}</span>
         {isDoc && <button className="btn" onClick={() => window.print()}>Print</button>}
         {isDoc && <button className="btn primary" onClick={openPdf}>Open PDF</button>}
+        <button className={`btn danger${sure ? " sure" : ""}`} onClick={remove}>{sure ? "Click again to delete" : "Delete job"}</button>
       </Topbar>
 
-      <div className="titlebar no-print">
-        <label htmlFor="job-title">Invoice name</label>
-        <input id="job-title" value={job.title} autoComplete="off"
-          onChange={(e) => update((j) => { j.title = e.target.value; })} />
-        <button className={`btn danger${sure ? " sure" : ""}`} onClick={remove}>{sure ? "Click again to delete" : "Delete job"}</button>
-      </div>
       <nav className="tabs no-print" aria-label="Job sections">
         {TABS.map((t) => {
           const pinned = split && t.key === current;

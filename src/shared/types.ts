@@ -116,7 +116,7 @@ export interface InvoiceVersion { id: string; name: string; invoice: InvoiceData
 
 export interface Job {
   id: string;
-  title: string;                    // the invoice name; also the name used for files
+  title: string;                    // the job name; also the name used for files
   created: number;
   updated: number;
   invoice: InvoiceData;             // the version that is open now
