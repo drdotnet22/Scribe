@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { Job } from "../../shared/types.ts";
-import { cutlistVars } from "../../shared/outputs.ts";
+import { jobVars } from "../../shared/outputs.ts";
 import { api } from "../api.ts";
 import { DocView, type DocName } from "../components.tsx";
 
@@ -12,7 +12,7 @@ export function PrintPage() {
   const { id, doc } = useParams();
   const [job, setJob] = useState<Job | null>(null);
   const [error, setError] = useState("");
-  const vars = useMemo(() => (job?.cutlist ? cutlistVars(job.cutlist.parsed) : {}), [job?.cutlist]);
+  const vars = useMemo(() => (job ? jobVars(job) : {}), [job]);
 
   useEffect(() => { api.get(id!).then(setJob).catch((e) => setError(e.message)); }, [id]);
 

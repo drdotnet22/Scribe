@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { cutlistVars } from "../../shared/outputs.ts";
+import { jobVars } from "../../shared/outputs.ts";
 import { api } from "../api.ts";
 import { DocView, Topbar, type DocName } from "../components.tsx";
 import { useJob } from "../useJob.ts";
@@ -31,7 +31,7 @@ export function JobPage() {
   const nav = useNavigate();
   const { job, error, save, update, replace, flush, discard } = useJob(id);
   const [sure, setSure] = useState(false);
-  const vars = useMemo(() => (job?.cutlist ? cutlistVars(job.cutlist.parsed) : {}), [job?.cutlist]);
+  const vars = useMemo(() => (job ? jobVars(job) : {}), [job]);
 
   if (!TABS.some((t) => t.key === tab)) return <Navigate to={`/jobs/${id}/invoice`} replace />;
   const current = tab as TabKey;

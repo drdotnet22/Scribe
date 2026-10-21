@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CutlistComparison, Job } from "../../shared/types.ts";
 import { personName } from "../../shared/cutlist.ts";
-import { cutlistVars, materialsIn, orderGroups, plywoodGroups } from "../../shared/outputs.ts";
+import { jobTotals, jobVars, materialsIn, plywoodGroups } from "../../shared/outputs.ts";
 import { api } from "../api.ts";
 
 interface Props {
@@ -141,9 +141,14 @@ export function CutlistTab({ job, update, replace, flush }: Props) {
   );
 
   const p = cut.parsed;
-  const orders = orderGroups(p);
+  const totals = jobTotals(job);
+  const orders = [
+    { key: "doors", heading: "Doors", ...totals.doors },
+    { key: "fronts", heading: "Drawer fronts", ...totals.fronts },
+    { key: "ends", heading: "End panels", ...totals.endPanels },
+  ].filter((g) => g.pieces > 0);
   const allMaterials = plywoodGroups(p, []);
-  const vars = cutlistVars(p);
+  const vars = jobVars(job);
   const pieces = p.bodyParts.reduce((t, x) => t + x.qty, 0);
 
   const toggle = (material: string, on: boolean) => update((j) => {
@@ -181,6 +186,8 @@ export function CutlistTab({ job, update, replace, flush }: Props) {
         {orders.map((g) => (
           <div className="tile" key={g.key}><b>{g.pieces}</b><span>{g.heading} · {g.sqft.toFixed(1)} sq ft</span></div>
         ))}
+        <div className="tile"><b>{totals.drawers}</b><span>Drawer boxes</span></div>
+        <div className="tile"><b>{totals.plywood.pieces}</b><span>Plywood parts · {totals.plywood.sqft.toFixed(1)} sq ft</span></div>
         <div className="tile"><b>{allMaterials.length}</b><span>materials with cut parts</span></div>
       </div>
 

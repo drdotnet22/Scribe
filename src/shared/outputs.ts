@@ -176,6 +176,56 @@ export function cutlistVars(p: ParsedCutlist): Vars {
   };
 }
 
+/** Pieces and square feet for a list of size lines (rows that are not numbers yet count as zero). */
+export function sizeTotals(lines: SizeLine[]): { pieces: number; sqft: number } {
+  let pieces = 0, area = 0;
+  for (const l of lines) {
+    const q = Number.isInteger(l.qty) && l.qty > 0 ? l.qty : 0;
+    pieces += q;
+    area += sqft(q, inchesOf(l.width) ?? 0, inchesOf(l.height) ?? 0);
+  }
+  return { pieces, sqft: area };
+}
+
+/** Totals for the cutlist tab and the invoice: they follow the lists as they are now, including hand edits. */
+export interface JobTotals {
+  doors: { pieces: number; sqft: number };
+  fronts: { pieces: number; sqft: number };
+  endPanels: { pieces: number; sqft: number };
+  drawers: number;
+  plywood: { pieces: number; sqft: number };
+}
+
+export function jobTotals(job: Job, settings: AppSettings = DEFAULT_SETTINGS): JobTotals {
+  const l = doorLines(job, job.doorOrder);
+  const ply = plywoodLines(job);
+  return {
+    doors: sizeTotals(l.doors),
+    fronts: sizeTotals(l.fronts),
+    endPanels: sizeTotals(l.endPanels),
+    drawers: drawerLines(job, job.drawerOrder, settings).reduce((t, d) => t + (Number.isInteger(d.qty) && d.qty > 0 ? d.qty : 0), 0),
+    plywood: { pieces: ply.reduce((t, g) => t + g.pieces, 0), sqft: ply.reduce((t, g) => t + g.sqft, 0) },
+  };
+}
+
+/** The invoice formula numbers for a job. Same names as cutlistVars, but they follow hand edits. */
+export function jobVars(job: Job, settings: AppSettings = DEFAULT_SETTINGS): Vars {
+  if (!job.cutlist) return {};
+  const t = jobTotals(job, settings);
+  return {
+    doors_count: t.doors.pieces,
+    doors_sqft: t.doors.sqft,
+    drawerfronts_count: t.fronts.pieces,
+    drawerfronts_sqft: t.fronts.sqft,
+    endpanels_count: t.endPanels.pieces,
+    endpanels_sqft: t.endPanels.sqft,
+    drawers_count: t.drawers,
+    plywood_pieces: t.plywood.pieces,
+    plywood_sqft: t.plywood.sqft,
+    cabinets_count: job.cutlist.parsed.cabinetCount,
+  };
+}
+
 /* ---------- finished drawer boxes (the supplier's drawer order form) ---------- */
 
 /** Undermount slide lengths (inches). Drawer boxes must be exactly one of these deep. */

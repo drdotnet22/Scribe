@@ -401,3 +401,29 @@ test("joplin note sync: one shared notebook, one note per job, every case", asyn
     assert.equal(notes.get("o2a")!.folder === "old2", false);
   } finally { db.close(); rmSync(dir, { recursive: true, force: true }); }
 });
+
+test("cutlist numbers follow hand edits to the door, drawer and plywood lists", async () => {
+  const { jobVars, jobTotals } = await import("../src/shared/outputs.ts");
+  const { blankJob } = await import("../src/shared/invoice.ts");
+  const job = blankJob("x", "t"); job.cutlist = { raw: "", parsed: p, hiddenMaterials: [] };
+  const before = jobVars(job);
+  assert.equal(before.doors_count, cutlistVars(p).doors_count);          // untouched job matches the cutlist
+  assert.ok(Math.abs(before.doors_sqft - cutlistVars(p).doors_sqft) < 0.01);
+  job.doorOrder = { ...job.doorOrder!, doors: [{ qty: 3, width: "12", height: "24", note: "" }], endPanels: [] };
+  const after = jobVars(job);
+  assert.equal(after.doors_count, 3);
+  assert.equal(after.doors_sqft, 6);                                      // 3 x 12 x 24 / 144
+  assert.equal(after.endpanels_count, 0);
+  assert.equal(after.drawerfronts_count, before.drawerfronts_count);      // fronts not edited
+  job.doorOrder.doors!.push({ qty: 1, width: "abc", height: "", note: "" }); // half-typed row counts nothing for area
+  assert.equal(jobVars(job).doors_sqft, 6);
+  job.drawerOrder = { ...job.drawerOrder!, rows: [{ ...(jobTotalsDrawer() as object), qty: 4 } as never] };
+  assert.equal(jobTotals(job).drawers, 4);
+  job.plywood = { groups: [{ material: "X", rows: [{ qty: 2, w: "24", l: "48", part: "", refs: "" }] }] };
+  assert.equal(jobVars(job).plywood_pieces, 2);
+  assert.equal(jobVars(job).plywood_sqft, 16);
+});
+
+function jobTotalsDrawer() {
+  return { qty: 1, height: "4", width: "18", depth: "21", bottom38: false, pulloutNoScoop: false, pulloutScoop: false, ears: false, scallop: "", partsOnly: false, note: "" } as never;
+}
