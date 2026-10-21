@@ -70,13 +70,13 @@ test("finished doors, drawer fronts and end panels", () => {
 });
 
 test("plywood cutlist groups by material and drops hidden materials", () => {
-  assert.deepEqual(materialsIn(p), ["Undefined Material", "1/4 Alma Ply", "3/8 Lauan Ply", "3/4 Birch VC", "9/16 Poplar"]);
-  assert.ok(!plywoodGroups(p, []).some((g) => g.rows.some((r) => /FRONT/.test(r.part))), "pull-out fronts are not made");
+  assert.deepEqual(materialsIn(p), ["Undefined Material", "1/4 Alma Ply", "3/8 Lauan Ply", "3/4 Birch VC"]);
+  assert.ok(!plywoodGroups(p, []).some((g) => g.rows.some((r) => /DRAWER|PULL-OUT/.test(r.part))), "drawer boxes and pull-outs come from another supplier");
   const groups = plywoodGroups(p, DEFAULT_HIDDEN_MATERIALS);
   assert.ok(!groups.some((x) => x.material === "Undefined Material"));
-  assert.deepEqual(groups.map((x) => x.material), ["3/4 Birch VC", "9/16 Poplar", "3/8 Lauan Ply", "1/4 Alma Ply"]);
+  assert.deepEqual(groups.map((x) => x.material), ["3/4 Birch VC", "3/8 Lauan Ply", "1/4 Alma Ply"]);
   const alma = groups.find((x) => x.material === "1/4 Alma Ply")!;
-  assert.equal(alma.pieces, 6 + 13 + 2, "back panels + drawer bottoms + pull-out bottoms");
+  assert.equal(alma.pieces, 6, "back panels only");
   const birch = groups.find((x) => x.material === "3/4 Birch VC")!;
   assert.equal(birch.pieces, 78);
   const widths = birch.rows.map((r) => dim(r.w).inches);

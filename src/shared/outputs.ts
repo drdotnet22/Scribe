@@ -72,27 +72,7 @@ function collectParts(p: ParsedCutlist): RawPart[] {
       wi: b.width.inches, li: b.length.inches, part: b.description, refs: refsText(b.refs),
     });
   }
-  // drawer boxes and pull-outs: each column has its own material in the section header
-  const boxSections: { heading: string; prefix: string; cols: [string, string, string][] }[] = [
-    { heading: "DRAWERS", prefix: "DRAWER", cols: [["Ends", "End", "END"], ["Sides", "Sides", "SIDE"], ["Bottoms", "Bottom", "BOTTOM"]] },
-    { heading: "PULL-OUTS", prefix: "PULL-OUT", cols: [["Ends", "End", "END"], ["Sides", "Sides", "SIDE"], ["Bottoms", "Bottom", "BOTTOM"]] },
-  ];
-  for (const def of boxSections) {
-    const s = p.sections.find((x) => x.heading === def.heading);
-    if (!s) continue;
-    for (const row of s.rows) {
-      for (const [col, metaKey, label] of def.cols) {
-        const material = s.meta[metaKey];
-        if (!material) continue;
-        for (const c of row.columns[col] ?? []) {
-          parts.push({
-            material, qty: c.qty, w: c.w.text, l: c.l.text, wi: c.w.inches, li: c.l.inches,
-            part: `${def.prefix} ${label}`, refs: refsText(row.refs),
-          });
-        }
-      }
-    }
-  }
+  // Drawer boxes and pull-outs are ordered from another supplier, so they are not part of the plywood list.
   return parts;
 }
 
