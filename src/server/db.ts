@@ -43,6 +43,9 @@ export function openDb(dataDir: string) {
       folder_title TEXT NOT NULL,
       state        TEXT NOT NULL DEFAULT 'ok'
     )`);
+  if (!(db.prepare("PRAGMA table_info(joplin_links)").all() as { name: string }[]).some((c) => c.name === "note_title")) {
+    db.exec("ALTER TABLE joplin_links ADD COLUMN note_title TEXT NOT NULL DEFAULT ''");
+  }
   db.exec("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
   return db;
 }
@@ -114,12 +117,13 @@ export function sheetsRepo(db: Db) {
 }
 export type SheetsRepo = ReturnType<typeof sheetsRepo>;
 
-export interface JoplinLink { jobId: string; folderId: string; noteId: string; base: string; folderTitle: string; state: "ok" | "missing" }
+/** folderTitle is the notebook the note was last put in; noteTitle is the note's name in Joplin. */
+export interface JoplinLink { jobId: string; folderId: string; noteId: string; base: string; folderTitle: string; noteTitle: string; state: "ok" | "missing" }
 
 export function joplinLinksRepo(db: Db) {
-  const get = db.prepare("SELECT job_id AS jobId, folder_id AS folderId, note_id AS noteId, base, folder_title AS folderTitle, state FROM joplin_links WHERE job_id = ?");
-  const put = db.prepare(`INSERT INTO joplin_links (job_id, folder_id, note_id, base, folder_title, state) VALUES (@jobId, @folderId, @noteId, @base, @folderTitle, @state)
-    ON CONFLICT(job_id) DO UPDATE SET folder_id=@folderId, note_id=@noteId, base=@base, folder_title=@folderTitle, state=@state`);
+  const get = db.prepare("SELECT job_id AS jobId, folder_id AS folderId, note_id AS noteId, base, folder_title AS folderTitle, note_title AS noteTitle, state FROM joplin_links WHERE job_id = ?");
+  const put = db.prepare(`INSERT INTO joplin_links (job_id, folder_id, note_id, base, folder_title, note_title, state) VALUES (@jobId, @folderId, @noteId, @base, @folderTitle, @noteTitle, @state)
+    ON CONFLICT(job_id) DO UPDATE SET folder_id=@folderId, note_id=@noteId, base=@base, folder_title=@folderTitle, note_title=@noteTitle, state=@state`);
   const del = db.prepare("DELETE FROM joplin_links WHERE job_id = ?");
   return {
     get: (jobId: string) => get.get(jobId) as JoplinLink | undefined,

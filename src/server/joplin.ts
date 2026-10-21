@@ -1,6 +1,6 @@
 // Talks to the Joplin container (see joplin/agent.mjs). Everything here is optional: with no JOPLIN_URL, Scribe works on its own.
 import type { JoplinLinksRepo } from "./db.ts";
-import { notebookTitle, reconcileNote } from "../shared/noteSync.ts";
+import { JOB_NOTEBOOK, noteTitleFor, reconcileNote } from "../shared/noteSync.ts";
 
 const BASE = (process.env.JOPLIN_URL ?? "").replace(/\/+$/, "");
 export const joplinEnabled = BASE !== "";
@@ -8,13 +8,15 @@ export const joplinEnabled = BASE !== "";
 /** The few things Scribe needs from Joplin. A fake one is used in tests. */
 export interface JoplinClient {
   sync(): Promise<void>;
-  createFolder(title: string): Promise<string>;
-  renameFolder(id: string, title: string): Promise<void>;
-  folderExists(id: string): Promise<boolean>;
+  /** The top-level notebook with this name (made if it does not exist). */
+  ensureFolder(title: string): Promise<string>;
   createNote(folderId: string, title: string, body: string): Promise<string>;
   /** null when the note is gone (deleted, or in Joplin's trash). */
   getNote(id: string): Promise<{ body: string } | null>;
   putNote(id: string, body: string): Promise<void>;
+  updateNote(id: string, change: { title?: string; folderId?: string }): Promise<void>;
+  folderIsEmpty(id: string): Promise<boolean>;
+  deleteFolder(id: string): Promise<void>;
 }
 
 async function request(path: string, init: RequestInit = {}, timeoutMs = 20_000): Promise<Response> {
@@ -38,6 +40,9 @@ export async function joplinReachable(): Promise<boolean> {
   try { return (await request("/health", {}, 3000)).ok; } catch { return false; }
 }
 
+// Two jobs asking for the notebook at once must not make it twice.
+let folderLock: Promise<unknown> = Promise.resolve();
+
 export const joplinClient: JoplinClient = {
   async sync() {
     const res = await request("/sync", { method: "POST" }, 150_000);
@@ -47,11 +52,20 @@ export const joplinClient: JoplinClient = {
       throw new Error(msg);
     }
   },
-  async createFolder(title) { return (await api<{ id: string }>("/folders", "POST", { title }))!.id; },
-  async renameFolder(id, title) { await api(`/folders/${id}`, "PUT", { title }); },
-  async folderExists(id) {
-    const f = await api<{ deleted_time?: number }>(`/folders/${id}?fields=id,deleted_time`);
-    return !!f && !f.deleted_time;
+  ensureFolder(title) {
+    const run = async () => {
+      for (let page = 1; page < 50; page++) {
+        const r = await api<{ items: { id: string; title: string; parent_id: string; deleted_time?: number }[]; has_more: boolean }>(
+          `/folders?fields=id,title,parent_id,deleted_time&page=${page}`);
+        const found = r?.items.find((f) => f.title === title && !f.parent_id && !f.deleted_time);
+        if (found) return found.id;
+        if (!r?.has_more) break;
+      }
+      return (await api<{ id: string }>("/folders", "POST", { title }))!.id;
+    };
+    const result = folderLock.catch(() => undefined).then(run);
+    folderLock = result;
+    return result;
   },
   async createNote(folderId, title, body) { return (await api<{ id: string }>("/notes", "POST", { title, body, parent_id: folderId }))!.id; },
   async getNote(id) {
@@ -59,6 +73,14 @@ export const joplinClient: JoplinClient = {
     return n && !n.deleted_time ? { body: n.body } : null;
   },
   async putNote(id, body) { await api(`/notes/${id}`, "PUT", { body }); },
+  async updateNote(id, change) {
+    await api(`/notes/${id}`, "PUT", { ...(change.title !== undefined ? { title: change.title } : {}), ...(change.folderId ? { parent_id: change.folderId } : {}) });
+  },
+  async folderIsEmpty(id) {
+    const r = await api<{ items: unknown[] }>(`/folders/${id}/notes?fields=id&limit=1`);
+    return !!r && r.items.length === 0;
+  },
+  async deleteFolder(id) { await api(`/folders/${id}`, "DELETE"); },
 };
 
 export interface NoteSyncResult {
@@ -76,17 +98,17 @@ const stamp = () => new Date().toLocaleString("sv-SE", { dateStyle: "short", tim
 export async function syncJobNote(
   client: JoplinClient, links: JoplinLinksRepo, job: { id: string; title: string }, text: string,
 ): Promise<NoteSyncResult> {
-  const link = links.get(job.id);
+  let link = links.get(job.id);
   if (link?.state === "missing") return { status: "missing", text };
 
   await client.sync(); // fetch whatever changed in Joplin
 
-  const wanted = notebookTitle(job.title);
+  const title = noteTitleFor(job.title);
   if (!link) {
     if (!text.trim()) return { status: "idle", text };
-    const folderId = await client.createFolder(wanted);
-    const noteId = await client.createNote(folderId, "Notes", text);
-    links.set({ jobId: job.id, folderId, noteId, base: text, folderTitle: wanted, state: "ok" });
+    const folderId = await client.ensureFolder(JOB_NOTEBOOK);
+    const noteId = await client.createNote(folderId, title, text);
+    links.set({ jobId: job.id, folderId, noteId, base: text, folderTitle: JOB_NOTEBOOK, noteTitle: title, state: "ok" });
     await client.sync();
     return { status: "linked", text, action: "created" };
   }
@@ -95,9 +117,23 @@ export async function syncJobNote(
   if (!note) { links.set({ ...link, state: "missing" }); return { status: "missing", text }; }
 
   let changedJoplin = false;
-  if (link.folderTitle !== wanted) {
-    await client.renameFolder(link.folderId, wanted);
-    links.set({ ...link, folderTitle: wanted });
+
+  // Notes made by the first version were one per notebook ("<job> - Scribe", note "Notes"): move them into the shared notebook.
+  if (link.folderTitle !== JOB_NOTEBOOK) {
+    const oldFolder = link.folderId;
+    const folderId = await client.ensureFolder(JOB_NOTEBOOK);
+    await client.updateNote(link.noteId, { folderId, title });
+    link = { ...link, folderId, folderTitle: JOB_NOTEBOOK, noteTitle: title };
+    links.set(link);
+    try { if (await client.folderIsEmpty(oldFolder)) await client.deleteFolder(oldFolder); } catch { /* leave the old notebook */ }
+    changedJoplin = true;
+  }
+
+  // The job was renamed.
+  if (link.noteTitle !== title) {
+    await client.updateNote(link.noteId, { title });
+    link = { ...link, noteTitle: title };
+    links.set(link);
     changedJoplin = true;
   }
 
@@ -105,17 +141,17 @@ export async function syncJobNote(
   let resolved = text;
   let done: NoteSyncResult["action"] = "same";
   if (action.kind === "same") {
-    if (link.base !== text) links.set({ ...link, base: text, folderTitle: wanted });
+    if (link.base !== text) links.set({ ...link, base: text });
   } else if (action.kind === "push") {
     await client.putNote(link.noteId, text);
-    links.set({ ...link, base: text, folderTitle: wanted });
+    links.set({ ...link, base: text });
     changedJoplin = true; done = "pushed";
   } else if (action.kind === "adopt") {
     resolved = note.body; done = "adopted"; // the page saves it; the next sync then finds both sides equal
   } else {
-    await client.createNote(link.folderId, `Notes - Joplin version ${stamp()}`, note.body);
+    await client.createNote(link.folderId, `${title} - Joplin version ${stamp()}`, note.body);
     await client.putNote(link.noteId, text);
-    links.set({ ...link, base: text, folderTitle: wanted });
+    links.set({ ...link, base: text });
     changedJoplin = true; done = "conflict";
   }
   if (changedJoplin) await client.sync(); // send our changes on to the Joplin Server
@@ -123,16 +159,14 @@ export async function syncJobNote(
 }
 
 /**
- * After the note was deleted in Joplin: make a new, empty note in the same notebook if it is still there
- * (the next sync fills it with Scribe's text), otherwise forget the link so a fresh notebook is made.
+ * After the note was deleted in Joplin: make a new, empty note for the job in the shared notebook
+ * (the next sync fills it with Scribe's text).
  */
-export async function relinkJobNote(client: JoplinClient, links: JoplinLinksRepo, jobId: string): Promise<void> {
-  const link = links.get(jobId);
+export async function relinkJobNote(client: JoplinClient, links: JoplinLinksRepo, job: { id: string; title: string }): Promise<void> {
+  const link = links.get(job.id);
   if (!link) return;
-  if (await client.folderExists(link.folderId)) {
-    const noteId = await client.createNote(link.folderId, "Notes", "");
-    links.set({ ...link, noteId, base: "", state: "ok" });
-  } else {
-    links.remove(jobId);
-  }
+  const folderId = await client.ensureFolder(JOB_NOTEBOOK);
+  const title = noteTitleFor(job.title);
+  const noteId = await client.createNote(folderId, title, "");
+  links.set({ ...link, folderId, noteId, base: "", folderTitle: JOB_NOTEBOOK, noteTitle: title, state: "ok" });
 }

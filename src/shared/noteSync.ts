@@ -18,4 +18,7 @@ export function reconcileNote(local: string, remote: string, base: string): Note
   return { kind: "conflict" };
 }
 
-export const notebookTitle = (jobTitle: string) => `${jobTitle.trim() || "Untitled job"} - Scribe`;
+/** Every job's note lives in this one notebook in Joplin. */
+export const JOB_NOTEBOOK = "Scribe job notes";
+/** The Joplin note for a job is named after the job. */
+export const noteTitleFor = (jobTitle: string) => jobTitle.trim() || "Untitled job";

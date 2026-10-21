@@ -47,9 +47,9 @@ export function NotesTab({ job, update, flush }: Props) {
       setLine(res.status === "missing"
         ? { kind: "error", text: "The note for this job was deleted in Joplin, so syncing is paused." }
         : res.action === "conflict"
-        ? { kind: "error", text: "This note was edited in both places. Your Scribe text was kept, and the Joplin version is saved as a separate note in the job's notebook." }
+        ? { kind: "error", text: "This note was edited in both places. Your Scribe text was kept, and the Joplin version is saved as a separate note next to it." }
         : res.action === "adopted" ? { kind: "ok", text: `Updated from Joplin at ${at}.` }
-        : res.action === "created" ? { kind: "ok", text: "Added to Joplin in its own notebook." }
+        : res.action === "created" ? { kind: "ok", text: "Added to Joplin, in the \"Scribe job notes\" notebook." }
         : res.status === "idle" ? { kind: "ok", text: "Joplin is connected. The note is added to Joplin once you write something." }
         : { kind: "ok", text: `In step with Joplin at ${at}.` });
     } catch (e) {

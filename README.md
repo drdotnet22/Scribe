@@ -22,7 +22,7 @@ Keep `./caddy-data` (it holds the certificate authority; losing it means install
 
 ## Notes in Joplin (optional)
 
-Each job's note can be kept in step with your Joplin, in its own notebook named `JOB TITLE - Scribe`. Edits made in Scribe or in Joplin show up in the other. It does not sync on a timer: Scribe asks for a sync when you open a job's Notes tab, a few seconds after you stop typing, about every 90 seconds while the tab stays open and quiet, and when you press "Sync with Joplin now". Nothing is created in Joplin for a job until you write something in its note.
+Each job's note can be kept in step with your Joplin. They all go in one notebook called `Scribe job notes`, one note per job, named after the job (rename the job and the note is renamed). Edits made in Scribe or in Joplin show up in the other. It does not sync on a timer: Scribe asks for a sync when you open a job's Notes tab, a few seconds after you stop typing, about every 90 seconds while the tab stays open and quiet, and when you press "Sync with Joplin now". Nothing is created in Joplin for a job until you write something in its note. (An earlier version made a notebook per job. Those notes are moved into `Scribe job notes` the next time they sync, and the old notebook is deleted if it is then empty.)
 
 Set up (on the server):
 
@@ -30,7 +30,7 @@ Set up (on the server):
 2. `docker compose up -d --build`. This builds and starts a small `joplin` container (a headless Joplin app) next to Scribe. It keeps its own copy of your Joplin data in `./joplin-data`, and the first sync downloads everything in your Joplin account. That folder is not committed.
 3. Open a job's Notes tab. The line above the note says when it last synced.
 
-If both sides changed the same note between syncs, Scribe's text is kept and Joplin's version is saved next to it in the notebook as "Notes - Joplin version DATE". If you delete the note in Joplin, syncing for that job pauses until you press "Create it in Joplin again". Deleting a job in Scribe leaves its Joplin notebook alone. Without a `.env`, none of this runs and Scribe behaves as before.
+If both sides changed the same note between syncs, Scribe's text is kept and Joplin's version is saved next to it in the notebook as "JOB TITLE - Joplin version DATE". If you delete the note in Joplin, syncing for that job pauses until you press "Create it in Joplin again". Deleting a job in Scribe leaves its Joplin notebook alone. Without a `.env`, none of this runs and Scribe behaves as before.
 
 ## Using it
 

@@ -96,7 +96,7 @@ app.put<{ Params: { id: string }; Body: Job }>("/api/jobs/:id", async (req, repl
 app.delete<{ Params: { id: string } }>("/api/jobs/:id", async (req, reply) => {
   if (!jobs.remove(req.params.id)) return reply.code(404).send({ error: "Job not found" });
   sheets.removeForJob(req.params.id);
-  joplinLinks.remove(req.params.id); // the Joplin notebook itself is left alone
+  joplinLinks.remove(req.params.id); // its note in Joplin is left alone
   return { ok: true };
 });
 
@@ -117,10 +117,12 @@ app.post<{ Params: { id: string }; Body: { text?: string } }>("/api/jobs/:id/not
   catch (e) { return reply.code(502).send({ error: (e as Error).message }); }
 });
 
-/** After the Joplin note was deleted: make a new note in the same notebook (or a new notebook if that is gone too). */
+/** After the Joplin note was deleted: make a new note for the job in the shared notebook. */
 app.post<{ Params: { id: string } }>("/api/jobs/:id/notes/relink", async (req, reply) => {
   if (!joplinEnabled) return reply.code(404).send({ error: "Joplin is not set up." });
-  try { await relinkJobNote(joplinClient, joplinLinks, req.params.id); return { ok: true }; }
+  const job = jobs.get(req.params.id);
+  if (!job) return reply.code(404).send({ error: "Job not found" });
+  try { await relinkJobNote(joplinClient, joplinLinks, job); return { ok: true }; }
   catch (e) { return reply.code(502).send({ error: (e as Error).message }); }
 });
 
