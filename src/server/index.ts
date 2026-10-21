@@ -110,6 +110,7 @@ app.get<{ Params: { id: string } }>("/api/jobs/:id/sheets", async (req, reply) =
 app.post<{ Params: { id: string }; Querystring: { name?: string }; Body: Buffer }>("/api/jobs/:id/sheets", async (req, reply) => {
   if (!jobs.get(req.params.id)) return reply.code(404).send({ error: "Job not found" });
   if (!isXlsx(req.body)) return reply.code(422).send({ error: "That is not an .xlsx file." });
+  if (sheets.list(req.params.id).length) return reply.code(409).send({ error: "This job already has a spreadsheet." });
   const id = randomUUID();
   sheets.add(id, req.params.id, cleanName(req.query.name) || "Sheet", req.body);
   return sheets.info(id);
