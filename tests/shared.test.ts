@@ -463,3 +463,12 @@ test("cabinet references that wrap onto a second line are joined", () => {
   assert.deepEqual(row.refs.map((r) => r.cabinet), ["2", "11"]);
   assert.equal(row.columns["Fronts"][0].qty, 2);
 });
+
+test("plywood CSV has one line per part and quotes what needs it", async () => {
+  const { plywoodCsv } = await import("../src/shared/outputs.ts");
+  const csv = plywoodCsv([
+    { material: "3/4 Birch VC", rows: [{ qty: 2, w: "19 3/8", l: "34 1/2", part: "SIDE", refs: "1[#2(1,2)]" }] },
+    { material: '1/4 "Alma" Ply', rows: [{ qty: 1, w: "10", l: "20", part: "", refs: "" }] },
+  ]);
+  assert.equal(csv, 'Material,Qty,Width,Length,Part,Cabinets\r\n3/4 Birch VC,2,19 3/8,34 1/2,SIDE,"1[#2(1,2)]"\r\n"1/4 ""Alma"" Ply",1,10,20,,\r\n');
+});

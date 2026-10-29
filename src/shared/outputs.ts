@@ -130,6 +130,17 @@ export function plywoodLines(job: Job): PlyGroup[] {
     : job.cutlist ? plywoodGroups(job.cutlist.parsed, job.cutlist.hiddenMaterials) : [];
 }
 
+/** The plywood list as CSV text for a spreadsheet or cut-optimizer: one line per part, with the material on each line. */
+export function plywoodCsv(groups: PlyEditGroup[]): string {
+  const field = (v: string | number) => {
+    const t = String(v);
+    return /[",\r\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  const lines = [["Material", "Qty", "Width", "Length", "Part", "Cabinets"]];
+  for (const g of groups) for (const r of g.rows) lines.push([g.material, String(r.qty), r.w, r.l, r.part, r.refs]);
+  return lines.map((l) => l.map(field).join(",")).join("\r\n") + "\r\n";
+}
+
 export const blankPlyRow = (): PlyRow => ({ qty: 1, w: "", l: "", part: "", refs: "" });
 
 /** "3/4 Birch VC" -> 0.75 so thicker stock lists first. */

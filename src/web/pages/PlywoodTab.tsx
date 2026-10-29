@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Job, PlyEditGroup, PlyRow } from "../../shared/types.ts";
-import { blankPlyRow, plywoodEditable, plywoodTotals } from "../../shared/outputs.ts";
+import { blankPlyRow, plywoodCsv, plywoodEditable, plywoodTotals } from "../../shared/outputs.ts";
 import { issueList, plyRowIssues, tidyMeasure } from "../../shared/validate.ts";
 import { PlywoodDoc } from "../docs/PlywoodDoc.tsx";
 
@@ -58,6 +58,15 @@ export function PlywoodTab({ job, update, flush }: Props) {
     if (!window.open(url, "_blank")) window.location.href = url;
   };
 
+  /** Saves CSV text as a file. The byte order mark lets Excel read the text correctly. */
+  const download = (groupsToSave: PlyEditGroup[], suffix: string) => {
+    const name = `${job.title.replace(/[\\/:*?"<>|]+/g, "").trim() || "Job"} - ${suffix.replace(/[\\/:*?"<>|]+/g, "-")}.csv`;
+    const url = URL.createObjectURL(new Blob(["\uFEFF", plywoodCsv(groupsToSave)], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <>
       <main className="page no-print" style={{ maxWidth: 1000 }}>
@@ -65,13 +74,14 @@ export function PlywoodTab({ job, update, flush }: Props) {
           <h1 style={{ margin: 0 }}>Plywood cutlist</h1>
           <div className="row">
             <button className="btn" disabled={problems.length > 0 || !groups.length} onClick={print}>Print</button>
+            <button className="btn" disabled={problems.length > 0 || !groups.length} onClick={() => download(groups, "Plywood cutlist")}>Download CSV</button>
             <button className="btn primary" disabled={problems.length > 0 || !groups.length} onClick={pdf}>Open PDF</button>
           </div>
         </div>
         <p className="muted">
           {pieces} piece{pieces === 1 ? "" : "s"} in {groups.length} material{groups.length === 1 ? "" : "s"} ·{" "}
           {edited ? "Edited by hand. A revised cutlist will not change it." : job.cutlist ? "From the cutlist" : "No cutlist, add materials and parts by hand"}.
-          {" "}Change any size or quantity, add parts, or remove what you do not need. Print and PDF use this list.
+          {" "}Change any size or quantity, add parts, or remove what you do not need. Print, PDF and CSV use this list.
         </p>
 
         {!!problems.length && (
@@ -89,6 +99,8 @@ export function PlywoodTab({ job, update, flush }: Props) {
                 style={{ ...cell, width: 280, fontWeight: 700, ...(issues[gi].name ? bad : {}) }} value={grp.material} placeholder="Material, such as 3/4 Maple VC"
                 onChange={(e) => edit((x) => { x[gi].material = e.target.value; })} />
               <span className="muted">{totals[gi].pieces} piece{totals[gi].pieces === 1 ? "" : "s"} · {totals[gi].sqft.toFixed(1)} sq ft net</span>
+              <button className="btn" disabled={!!issues[gi].name || issues[gi].rows.some((i) => Object.values(i).some(Boolean))}
+                onClick={() => download([grp], grp.material.trim())}>CSV</button>
               <button className={`btn danger${sure === gi ? " sure" : ""}`} onClick={() => confirm(gi, () => edit((x) => { x.splice(gi, 1); }))}>
                 {sure === gi ? "Click again to remove" : "Remove material"}
               </button>
