@@ -8,7 +8,7 @@ Invoices, cutlist import, door/drawer-front order form and plywood cutlist.
 
     docker compose up -d --build
 
-Open https://scribe.local:5877 (see below). On the server itself the app is also at http://localhost:3000. Data lives in `./data` (SQLite file `app.db`, plus a daily backup in `./data/backups`, 30 days kept). Back up the `data` folder.
+Open https://scribe.local:5877 (see below). On the server itself the app is also at http://localhost:3000. Data lives in `./data` (the SQLite database `gcw.db`, plus a daily backup in `./data/backups`, 30 days kept). To back up with Duplicati, point it at `./data/backups`: those are complete copies made with SQLite's own backup, so they are safe to copy while the app runs, and they hold everything (jobs, settings, sheets, Joplin links). Backing up the whole `./data` folder also works. Optional: `./caddy-data` holds the HTTPS certificate authority, so keep it if you do not want to reinstall the certificate on your devices. `./joplin-data` can be rebuilt from your `.env`, and `.env` itself holds your Joplin password, so keep it somewhere safe too.
 
 ## HTTPS at https://scribe.local:5877
 
