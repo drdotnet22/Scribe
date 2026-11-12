@@ -8,17 +8,11 @@ Invoices, cutlist import, door/drawer-front order form and plywood cutlist.
 
     docker compose up -d --build
 
-Set up sign-in first (see below): Scribe will not start without it. Then open https://scribe.local:5877 (see below). Data lives in `./data` (the SQLite database `gcw.db`, plus a daily backup in `./data/backups`, 30 days kept). To back up with Duplicati, point it at `./data/backups`: those are complete copies made with SQLite's own backup, so they are safe to copy while the app runs, and they hold everything (jobs, settings, sheets, Joplin links). Backing up the whole `./data` folder also works. Optional: `./caddy-data` holds the HTTPS certificate authority, so keep it if you do not want to reinstall the certificate on your devices. `./joplin-data` can be rebuilt from your `.env`, and `.env` itself holds your Joplin password, so keep it somewhere safe too.
+Set up sign-in first (see below): Scribe will not start without it. Then open Scribe at the address your reverse proxy serves it on (the container publishes port 5877; see below). Data lives in `./data` (the SQLite database `gcw.db`, plus a daily backup in `./data/backups`, 30 days kept). To back up with Duplicati, point it at `./data/backups`: those are complete copies made with SQLite's own backup, so they are safe to copy while the app runs, and they hold everything (jobs, settings, sheets, Joplin links). Backing up the whole `./data` folder also works. `./joplin-data` can be rebuilt from your `.env`, and `.env` itself holds your Joplin password, so keep it somewhere safe too.
 
-## HTTPS at https://scribe.local:5877
+## Reverse proxy
 
-The `caddy` container serves Scribe over HTTPS on port 5877 using its own certificate authority. Nothing goes to the internet. (Ports 80 and 443 are not used.)
-
-1. **Make the name resolve.** Add a DNS entry on your router for `scribe.local` pointing at the server's IP. If the router cannot, add `SERVER-IP  scribe.local` to `C:\Windows\System32\drivers\etc\hosts` on each computer (open Notepad as administrator).
-2. **Trust the certificate, once per computer.** Get `root.crt` from `./caddy-data/caddy/pki/authorities/local/root.crt` on the server (or, before it is trusted, open https://scribe.local:5877/root.crt, click through the warning and keep the download). On Windows, double-click it, choose Install Certificate, Local Machine, Place all certificates in the following store, Trusted Root Certification Authorities. Restart the browser. Firefox keeps its own store: Settings, Certificates, View Certificates, Authorities, Import.
-3. Open https://scribe.local:5877. The padlock should be closed and downloads stop warning.
-
-Keep `./caddy-data` (it holds the certificate authority; losing it means installing a new root.crt everywhere). It is not committed to git.
+Scribe listens on port 5877 on the server (`5877:3000` in `docker-compose.yml`) and does no HTTPS itself. Put your reverse proxy in front of it, pointing at `http://SERVER:5877`, and set `APP_URL` in `.env` to the public address you open Scribe at. Port 5877 is open to anything that can reach the server, so allow only the proxy to reach it (a firewall rule), or sign-in can be bypassed by going to the port directly.
 
 ## Sign-in
 
@@ -44,7 +38,7 @@ Notes:
 
 - The cookie is signed with a key kept in `./data/session-secret` (made on first start), unless you set `SESSION_SECRET`. Deleting that file, or changing the provider, client or allowed user, signs everyone out.
 - An email in `AUTH_ALLOWED_USER` only matches if the provider does not mark it unverified.
-- Sign in through the address in `APP_URL`. http://localhost:3000 on the server sends you there to sign in, and the cookie belongs to that address.
+- Sign in through the address in `APP_URL`. http://localhost:5877 on the server sends you there to sign in, and the cookie belongs to that address.
 - If your provider uses a certificate from your own certificate authority, Scribe has to trust it: mount the root certificate into the `app` container and set `NODE_EXTRA_CA_CERTS` to its path.
 - `AUTH_DISABLED=true` turns sign-in off. Only do this for development.
 

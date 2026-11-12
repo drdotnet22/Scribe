@@ -1,9 +1,9 @@
 services:
   app:
     build: .
-    # Only reachable from the server itself; everyone else goes through Caddy.
+    # Scribe is published on port 5877. Point your reverse proxy at it.
     ports:
-      - "127.0.0.1:3000:3000"
+      - "5877:3000"
     volumes:
       - ./data:/data
     environment:
@@ -32,16 +32,4 @@ services:
       JOPLIN_SERVER_URL: ${JOPLIN_SERVER_URL:-}
       JOPLIN_USERNAME: ${JOPLIN_USERNAME:-}
       JOPLIN_PASSWORD: ${JOPLIN_PASSWORD:-}
-    restart: unless-stopped
-
-  # HTTPS front door: https://scribe.local:5877 (see the README)
-  caddy:
-    image: caddy:2
-    ports:
-      - "5877:5877"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./caddy-data:/data
-    depends_on:
-      - app
     restart: unless-stopped
