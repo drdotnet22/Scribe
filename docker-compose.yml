@@ -3,7 +3,7 @@ services:
     build: .
     # Scribe is published on port 5877. Point your reverse proxy at it.
     ports:
-      - "127.0.0.1:5877:3000"
+      - "5877:3000"
     volumes:
       - ./data:/data
     environment:
