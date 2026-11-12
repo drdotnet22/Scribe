@@ -9,6 +9,16 @@ services:
     environment:
       TZ: America/New_York
       JOPLIN_URL: ${JOPLIN_URL:-}   # set in .env to turn on the Joplin sync (see the README)
+      # Sign-in (OpenID Connect: Pocket ID or any standard provider). Set these in .env; see the README.
+      APP_URL: ${APP_URL:-https://scribe.local:5877}       # the address you open Scribe at
+      OIDC_ISSUER: ${OIDC_ISSUER:-}                         # e.g. https://id.example.com for Pocket ID
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}           # leave empty for a public (PKCE) client
+      AUTH_ALLOWED_USER: ${AUTH_ALLOWED_USER:-}             # the one account allowed in: email, username or subject id
+      OIDC_SCOPES: ${OIDC_SCOPES:-openid profile email}
+      SESSION_DAYS: ${SESSION_DAYS:-30}                     # stay signed in this long (renewed as you use it)
+      SESSION_SECRET: ${SESSION_SECRET:-}                   # optional; otherwise one is made in ./data/session-secret
+      AUTH_DISABLED: ${AUTH_DISABLED:-false}                # true turns sign-in off (not recommended)
     restart: unless-stopped
 
   # Optional: keeps each job's notes in step with your Joplin. Only starts when .env has COMPOSE_PROFILES=joplin.

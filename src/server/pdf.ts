@@ -1,4 +1,5 @@
 import { chromium, type Browser } from "playwright-core";
+import { INTERNAL_HEADER, internalToken } from "./auth.ts";
 
 // PDFs are made by opening the same print page you see in the app in a headless browser,
 // so the PDF always matches the screen.
@@ -15,7 +16,8 @@ async function getBrowser(): Promise<Browser> {
 
 export async function renderPdf(url: string): Promise<Buffer> {
   const b = await getBrowser();
-  const ctx = await b.newContext();
+  // The token lets this browser past sign-in; it never leaves this process.
+  const ctx = await b.newContext({ extraHTTPHeaders: { [INTERNAL_HEADER]: internalToken } });
   const page = await ctx.newPage();
   try {
     await page.goto(url, { waitUntil: "networkidle" });

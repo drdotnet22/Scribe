@@ -11,5 +11,5 @@ export default defineConfig({
   resolve: { alias: { "@ironcalc/wasm": fileURLToPath(new URL("./node_modules/@ironcalc/wasm-xlsx/wasm.js", import.meta.url)) } },
   optimizeDeps: { exclude: ["@ironcalc/wasm", "@ironcalc/wasm-xlsx"] },
   build: { outDir: "../../dist/web", emptyOutDir: true },
-  server: { port: 5173, proxy: { "/api": "http://localhost:3000" } },
+  server: { port: 5173, proxy: { "/api": "http://localhost:3000", "/auth": "http://localhost:3000" } },
 });

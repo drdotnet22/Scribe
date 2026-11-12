@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { openDb, jobsRepo, joplinLinksRepo, settingsRepo, sheetsRepo } from "./db.ts";
 import { joplinClient, joplinEnabled, joplinReachable, relinkJobNote, syncJobNote } from "./joplin.ts";
 import { startBackups } from "./backup.ts";
+import { setupAuth } from "./auth.ts";
 import { buildDrawerForm } from "./drawerForm.ts";
 import { buildDoorForm } from "./doorForm.ts";
 import { closeBrowser, renderPdf } from "./pdf.ts";
@@ -33,9 +34,13 @@ app.addContentTypeParser("application/octet-stream", { parseAs: "buffer", bodyLi
 
 startBackups(db, jobs, DATA_DIR, (m) => app.log.info(m));
 
+// Sign-in guards every route below (and the web app itself), so it is set up first.
+const authEnabled = setupAuth(app, DATA_DIR);
+
 /* ---------- jobs ---------- */
 
 app.get("/api/health", async () => ({ ok: true }));
+app.get("/api/me", async (req) => ({ authEnabled, name: req.user?.name ?? null }));
 app.get("/api/jobs", async () => jobs.list());
 
 app.get<{ Params: { id: string } }>("/api/jobs/:id", async (req, reply) => {

@@ -1,12 +1,18 @@
 import type { CutlistComparison, Job, JobSummary } from "../shared/types.ts";
 import type { AppSettings } from "../shared/settings.ts";
 
+/** The session cookie ran out: go through sign-in and come back to this page. */
+function signInAgain(res: Response) {
+  if (res.status === 401) location.href = `/auth/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
+}
+
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
     headers: init?.body ? { "Content-Type": "application/json", ...init.headers } : init?.headers,
   });
   if (!res.ok) {
+    signInAgain(res);
     let msg = `Something went wrong (${res.status})`;
     try { msg = (await res.json()).error ?? msg; } catch { /* keep default */ }
     throw new Error(msg);
@@ -15,6 +21,7 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  me: () => call<{ authEnabled: boolean; name: string | null }>("/api/me"),
   getSettings: () => call<AppSettings>("/api/settings"),
   saveSettings: (s: AppSettings) => call<AppSettings>("/api/settings", { method: "PUT", body: JSON.stringify(s) }),
   list: () => call<JobSummary[]>("/api/jobs"),
@@ -35,6 +42,7 @@ export interface SheetInfo { id: string; jobId: string; name: string; updated: n
 async function raw(url: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(url, init);
   if (!res.ok) {
+    signInAgain(res);
     let msg = `Something went wrong (${res.status})`;
     try { msg = (await res.json()).error ?? msg; } catch { /* keep default */ }
     throw new Error(msg);
