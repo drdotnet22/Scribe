@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GripVertical } from "lucide-react";
 import type { Job, PlyEditGroup, PlyRow } from "../../shared/types.ts";
 import { blankPlyRow, plywoodCsv, plywoodEditable, plywoodTotals } from "../../shared/outputs.ts";
 import { issueList, plyRowIssues, tidyMeasure } from "../../shared/validate.ts";
@@ -12,6 +13,9 @@ interface Props {
 
 const cell: React.CSSProperties = { width: "100%", padding: "4px 6px", border: "1px solid var(--line)", borderRadius: 4, font: "inherit", minWidth: 0 };
 const bad: React.CSSProperties = { borderColor: "var(--danger)", background: "#fff1f0" };
+const grip: React.CSSProperties = { display: "flex", alignItems: "center", justifyContent: "center", padding: 2, border: 0, background: "transparent", color: "var(--muted, #888)", cursor: "grab" };
+
+interface Spot { gi: number; ri: number }
 
 /** The plywood cutlist: starts from the cutlist, and every material and part can be changed, added or removed. */
 export function PlywoodTab({ job, update, flush }: Props) {
@@ -35,6 +39,37 @@ export function PlywoodTab({ job, update, flush }: Props) {
       j.plywood = { groups: next };
     });
   const setRow = (gi: number, ri: number, patch: Partial<PlyRow>) => edit((g) => { g[gi].rows[ri] = { ...g[gi].rows[ri], ...patch }; });
+  /** Moves a row, within its material or into another. `to` is the index it is inserted before, counted before the move. */
+  const moveRow = (from: Spot, to: Spot) => edit((x) => {
+    const [row] = x[from.gi].rows.splice(from.ri, 1);
+    const at = from.gi === to.gi && to.ri > from.ri ? to.ri - 1 : to.ri;
+    x[to.gi].rows.splice(at, 0, row);
+  });
+
+  // Dragging: which row is held, and where it would drop (before row ri of material gi).
+  const [held, setHeld] = useState<Spot | null>(null);
+  const [drop, setDrop] = useState<Spot | null>(null);
+  const endDrag = () => { setHeld(null); setDrop(null); };
+  const overRow = (gi: number, ri: number) => (e: React.DragEvent<HTMLTableRowElement>) => {
+    if (!held) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    const box = e.currentTarget.getBoundingClientRect();
+    const at = e.clientY > box.top + box.height / 2 ? ri + 1 : ri;
+    if (drop?.gi !== gi || drop.ri !== at) setDrop({ gi, ri: at });
+  };
+  const dropRow = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (held && drop && !(held.gi === drop.gi && (drop.ri === held.ri || drop.ri === held.ri + 1))) moveRow(held, drop);
+    endDrag();
+  };
+  const dropLine = (gi: number, ri: number): React.CSSProperties => {
+    if (!drop || drop.gi !== gi) return {};
+    if (drop.ri === ri) return { boxShadow: "inset 0 2px 0 var(--accent)" };
+    if (drop.ri === ri + 1 && ri === groups[gi].rows.length - 1) return { boxShadow: "inset 0 -2px 0 var(--accent)" };
+    return {};
+  };
+
   const confirm = (what: "reset" | number, run: () => void) => {
     if (sure !== what) { setSure(what); setTimeout(() => setSure(""), 4000); return; }
     setSure(""); run();
@@ -106,10 +141,36 @@ export function PlywoodTab({ job, update, flush }: Props) {
               </button>
             </div>
             <table className="plain" style={{ maxWidth: 900 }}>
-              <thead><tr><th style={{ width: 70 }}>Qty</th><th style={{ width: 120 }}>Width</th><th style={{ width: 120 }}>Length</th><th>Part</th><th>Cabinets</th><th style={{ width: 44 }} /></tr></thead>
+              <thead><tr><th style={{ width: 28 }} /><th style={{ width: 70 }}>Qty</th><th style={{ width: 120 }}>Width</th><th style={{ width: 120 }}>Length</th><th>Part</th><th>Cabinets</th><th style={{ width: 44 }} /></tr></thead>
               <tbody>
                 {grp.rows.map((r, ri) => (
-                  <tr key={ri}>
+                  <tr key={ri} onDragOver={overRow(gi, ri)} onDrop={dropRow}
+                    style={{ ...dropLine(gi, ri), ...(held?.gi === gi && held.ri === ri ? { opacity: 0.4 } : {}) }}>
+                    <td style={{ padding: "5px 0" }}>
+                      <button type="button" draggable style={grip} title="Drag to reorder, or use the arrow keys"
+                        aria-label={`Move row ${ri + 1}, ${g(gi)}. Use the up and down arrow keys.`}
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", "");
+                          const tr = e.currentTarget.closest("tr");
+                          if (tr) e.dataTransfer.setDragImage(tr, 14, tr.offsetHeight / 2);
+                          setHeld({ gi, ri });
+                        }}
+                        onDragEnd={endDrag}
+                        onKeyDown={(e) => {
+                          const up = e.key === "ArrowUp", down = e.key === "ArrowDown";
+                          if (!up && !down) return;
+                          e.preventDefault();
+                          const tr = e.currentTarget.closest("tr");
+                          if (up && ri > 0) moveRow({ gi, ri }, { gi, ri: ri - 1 });
+                          else if (down && ri < grp.rows.length - 1) moveRow({ gi, ri }, { gi, ri: ri + 2 });
+                          else return;
+                          // Keep focus on the handle as the row moves.
+                          requestAnimationFrame(() => ((up ? tr?.previousElementSibling : tr?.nextElementSibling)?.querySelector("button[draggable]") as HTMLElement | null)?.focus());
+                        }}>
+                        <GripVertical size={16} aria-hidden />
+                      </button>
+                    </td>
                     <td>
                       <input type="number" min={1} step={1} aria-label={`Quantity, ${g(gi)} row ${ri + 1}`} aria-invalid={!!issues[gi].rows[ri].qty} title={issues[gi].rows[ri].qty}
                         style={{ ...cell, ...(issues[gi].rows[ri].qty ? bad : {}) }} value={r.qty}
