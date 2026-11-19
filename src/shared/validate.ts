@@ -75,9 +75,9 @@ export function drawerLineIssues(r: DrawerLine): Issues<"qty" | "height" | "widt
   };
 }
 
+/** Each custom component size may be left blank; anything typed in must be a valid size. */
 export function customComponentIssues(r: CustomComponent): Issues<"qty" | "height" | "width" | "depth"> {
-  const any = !!(r.height.trim() || r.width.trim() || r.depth.trim());
-  return { qty: qtyProblem(r.qty), height: sizeProblem(r.height, any), width: sizeProblem(r.width, any), depth: sizeProblem(r.depth, any) };
+  return { qty: qtyProblem(r.qty), height: sizeProblem(r.height, false), width: sizeProblem(r.width, false), depth: sizeProblem(r.depth, false) };
 }
 
 /** Plywood parts always need both sizes. */

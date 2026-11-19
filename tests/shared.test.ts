@@ -257,6 +257,10 @@ test("size and quantity validation", async () => {
   assert.ok(sizeLineIssues({ qty: 1.5, width: "12", height: "x", note: "" }).qty);
   assert.ok(drawerLineIssues({ ...blankDrawerLine(), height: "4", width: "12" }).depth);
   assert.ok(drawerLineIssues({ ...blankDrawerLine(), scallop: "9/64" }).scallop);
+  const { customComponentIssues } = await import("../src/shared/validate.ts");
+  const c = { qty: 1, height: "", width: "", depth: "", note: "" };
+  assert.deepEqual(customComponentIssues({ ...c, width: "12" }), { qty: undefined, height: undefined, width: undefined, depth: undefined }); // blanks are fine
+  assert.ok(customComponentIssues({ ...c, depth: "20 1/3" }).depth);   // a typed size is still checked
 });
 
 test("spreadsheets are stored per job as whole files and removed with the job", async () => {
