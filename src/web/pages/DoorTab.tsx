@@ -5,6 +5,7 @@ import { DEFAULT_SETTINGS, type AppSettings } from "../../shared/settings.ts";
 import { api } from "../api.ts";
 import { issueList, sizeLineIssues, tidyMeasure } from "../../shared/validate.ts";
 import { blankSizeLine, DOOR_FORM_ROWS, doorLines, doorTableRows } from "../../shared/outputs.ts";
+import { gripHeader, moveItem, useRowDrag } from "../rowDrag.tsx";
 
 interface Props {
   job: Job;
@@ -36,6 +37,7 @@ export function DoorTab({ job, update, flush }: Props) {
       change(next);
       j.doorOrder = { ...order, [key]: next };
     });
+  const drag = useRowDrag<ListKey>((from, to) => editList(from.g, (r) => moveItem(r, r, from.i, to.i)));
   const reset = (key: ListKey) => {
     if (sure !== key) { setSure(key); setTimeout(() => setSure(""), 4000); return; }
     setSure("");
@@ -76,10 +78,11 @@ export function DoorTab({ job, update, flush }: Props) {
         </div>
         <p className="muted" style={{ marginTop: 0 }}>{help}</p>
         <table className="plain" style={{ maxWidth: 760 }}>
-          <thead><tr><th style={{ width: 70 }}>Qty</th><th>Width</th><th>Height</th><th>Comments</th><th style={{ width: 44 }} /></tr></thead>
+          <thead><tr>{gripHeader}<th style={{ width: 70 }}>Qty</th><th>Width</th><th>Height</th><th>Comments</th><th style={{ width: 44 }} /></tr></thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i}>
+              <tr key={i} {...drag.rowProps(k, i, rows.length)}>
+                {drag.handle(k, i, rows.length, `${title.toLowerCase()} row ${i + 1}`)}
                 <td>
                   <input type="number" min={1} step={1} aria-label={`Quantity, ${k} row ${i + 1}`} style={{ ...cell, ...(issues[k][i].qty ? bad : {}) }} value={r.qty}
                     aria-invalid={!!issues[k][i].qty} title={issues[k][i].qty}

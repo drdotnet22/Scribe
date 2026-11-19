@@ -5,6 +5,7 @@ import { DEFAULT_SETTINGS, type AppSettings } from "../../shared/settings.ts";
 import { api } from "../api.ts";
 import { drawerLineIssues, issueList, tidyMeasure } from "../../shared/validate.ts";
 import { blankDrawerLine, depthMatchesSlide, drawerLines, SLIDE_SIZES } from "../../shared/outputs.ts";
+import { gripHeader, moveItem, useRowDrag } from "../rowDrag.tsx";
 
 const CAPACITY = 21; // rows on the supplier's form
 
@@ -46,6 +47,7 @@ export function DrawerTab({ job, update, flush }: Props) {
       j.drawerOrder = { ...order, rows: next };
     });
   const setRow = (i: number, patch: Partial<DrawerLine>) => editRows((r) => { r[i] = { ...r[i], ...patch }; });
+  const drag = useRowDrag<"rows">((from, to) => editRows((r) => moveItem(r, r, from.i, to.i)));
   const reset = () => {
     if (!sure) { setSure(true); setTimeout(() => setSure(false), 4000); return; }
     setSure(false);
@@ -118,14 +120,15 @@ export function DrawerTab({ job, update, flush }: Props) {
           <table className="plain" style={{ minWidth: 1050 }}>
             <thead>
               <tr>
-                <th>Qty</th><th>Height</th><th>Width</th><th>Depth</th>
+                {gripHeader}<th>Qty</th><th>Height</th><th>Width</th><th>Depth</th>
                 <th title='3/8" bottom'>3/8" btm</th><th title="Pullout with no scoop">Pullout</th><th title="Pullout with scoop">Pullout scoop</th>
                 <th>Ears</th><th>Scallop sides to</th><th>Parts only</th><th>Logo</th><th>Front size</th><th>Comments</th><th />
               </tr>
             </thead>
             <tbody>
               {rows.map((r, i) => (
-                <tr key={i}>
+                <tr key={i} {...drag.rowProps("rows", i, rows.length)}>
+                  {drag.handle("rows", i, rows.length, `row ${i + 1}`)}
                   <td style={{ width: 56 }}>
                     <input type="number" min={1} step={1} aria-label={`Quantity, row ${i + 1}`} style={{ ...cell, ...(issues[i].qty ? bad : {}) }} value={r.qty}
                       aria-invalid={!!issues[i].qty} title={issues[i].qty}
