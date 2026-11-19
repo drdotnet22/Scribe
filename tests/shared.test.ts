@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { calc, display, isFormula } from "../src/shared/calc.ts";
 import { dim, parseCutlist, personName } from "../src/shared/cutlist.ts";
-import { cutlistVars, DEFAULT_HIDDEN_MATERIALS, materialsIn, orderGroups, plywoodGroups } from "../src/shared/outputs.ts";
+import { cutlistVars, DEFAULT_HIDDEN_MATERIALS, materialsIn, orderGroups, plywoodGroups, sizeLinesFromCutlist } from "../src/shared/outputs.ts";
 import { blankInvoice, totals } from "../src/shared/invoice.ts";
 import { inchesOf } from "../src/shared/outputs.ts";
 
@@ -495,4 +495,16 @@ test("plywood CSV has one line per part and quotes what needs it", async () => {
     { material: '1/4 "Alma" Ply', rows: [{ qty: 1, w: "10", l: "20", part: "", refs: "" }] },
   ]);
   assert.equal(csv, 'Material,Qty,Width,Length,Part,Cabinets\r\n3/4 Birch VC,2,19 3/8,34 1/2,SIDE,"1[#2(1,2)]"\r\n"1/4 ""Alma"" Ply",1,10,20,,\r\n');
+});
+
+test("a second door section (double-panel style) joins the door list with a note", () => {
+  const d = parseCutlist(readFileSync(new URL("./fixtures/double-panel-doors.txt", import.meta.url), "utf8"));
+  const g = orderGroups(d);
+  assert.equal(g.length, 1);
+  assert.equal(g[0].style, "ECASE-SFP10");
+  assert.equal(g[0].pieces, 6);
+  assert.deepEqual(g[0].rows.at(-1), { qty: 2, w: "17 1/4", h: "49 7/8", hinge: undefined, refs: "#9, #10", note: "Double panel" });
+  const l = sizeLinesFromCutlist(d);
+  assert.deepEqual(l.doors.map((r) => [r.qty, r.width, r.height, r.note]),
+    [[2, "17 1/4", "37 1/2", ""], [1, "19 1/16", "30 1/4", ""], [1, "11 7/8", "10 1/2", ""], [2, "17 1/4", "49 7/8", "Double panel"]]);
 });

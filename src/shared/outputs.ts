@@ -37,8 +37,11 @@ const ORDER_SECTIONS: { heading: string; label: string; hinge: boolean }[] = [
 export function orderGroups(p: ParsedCutlist): OrderGroup[] {
   const groups: OrderGroup[] = [];
   for (const def of ORDER_SECTIONS) {
-    const s = p.sections.find((x) => x.heading === def.heading);
-    if (!s || !s.rows.length) continue;
+    // A cutlist can have more than one section with the same heading (e.g. a second door
+    // style for tall doors with two panels). They all go in one list; the first one's style is shown.
+    const all = p.sections.filter((x) => x.heading === def.heading && x.rows.length);
+    if (!all.length) continue;
+    const s = all[0];
     const g: OrderGroup = {
       key: def.heading,
       heading: def.label,
@@ -48,9 +51,14 @@ export function orderGroups(p: ParsedCutlist): OrderGroup[] {
       showHinge: def.hinge,
       rows: [], pieces: 0, sqft: 0,
     };
-    for (const row of s.rows) {
-      for (const c of row.columns["Finished Size"] ?? []) {
-        g.rows.push({ qty: c.qty, w: c.w.text, h: c.l.text, hinge: row.hinge, refs: refsText(row.refs) });
+    for (const row of all.flatMap((x) => x.rows)) {
+      const finished = row.columns["Finished Size"] ?? [];
+      const doors = finished.reduce((t, c) => t + c.qty, 0);
+      const panels = (row.columns["Panels"] ?? []).reduce((t, c) => t + c.qty, 0);
+      const perDoor = doors ? Math.round(panels / doors) : 0;
+      const note = perDoor === 2 ? "Double panel" : perDoor > 2 ? `${perDoor} panels` : "";
+      for (const c of finished) {
+        g.rows.push({ qty: c.qty, w: c.w.text, h: c.l.text, hinge: row.hinge, refs: refsText(row.refs), ...(note && { note }) });
         g.pieces += c.qty;
         g.sqft += sqft(c.qty, c.w.inches, c.l.inches);
       }
@@ -313,7 +321,7 @@ export function sizeLinesFromCutlist(p: ParsedCutlist): { doors: SizeLine[]; fro
     const g = orderGroups(p).find((x) => x.heading === label);
     const merged = new Map<string, SizeLine>();
     for (const r of g?.rows ?? []) {
-      const note = noBore && /^none$/i.test(r.hinge ?? "") ? "No bore" : "";
+      const note = [noBore && /^none$/i.test(r.hinge ?? "") ? "No bore" : "", r.note ?? ""].filter(Boolean).join(", ");
       const key = [r.w, r.h, note].join("|");
       const prev = merged.get(key);
       if (prev) prev.qty += r.qty; else merged.set(key, { qty: r.qty, width: r.w, height: r.h, note });

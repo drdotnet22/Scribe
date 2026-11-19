@@ -17,7 +17,7 @@ function tallies(p: ParsedCutlist, hidden: string[]): Map<string, Tally> {
   for (const g of orderGroups(p)) {
     const t = area(g.heading);
     for (const r of g.rows) {
-      const item = `${r.w} × ${r.h}${g.showHinge && r.hinge ? ` (${r.hinge})` : ""}`;
+      const item = `${r.w} × ${r.h}${g.showHinge && r.hinge ? ` (${r.hinge})` : ""}${r.note ? ` ${r.note.toLowerCase()}` : ""}`;
       add(t, item, item, r.qty);
     }
   }

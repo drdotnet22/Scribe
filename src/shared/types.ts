@@ -140,7 +140,7 @@ export interface JobSummary { id: string; title: string; customer: string; updat
 
 /* ---------- derived documents ---------- */
 
-export interface OrderRow { qty: number; w: string; h: string; hinge?: string; refs: string }
+export interface OrderRow { qty: number; w: string; h: string; hinge?: string; refs: string; note?: string }
 export interface OrderGroup {
   key: string;
   heading: string;                  // "Doors", "Drawer fronts", "End panels"
