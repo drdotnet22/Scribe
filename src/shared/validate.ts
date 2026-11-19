@@ -1,5 +1,5 @@
 // Checks for the sizes and quantities typed into the door and drawer lists.
-import type { DrawerLine, PlyRow, SizeLine } from "./types.ts";
+import type { CustomComponent, DrawerLine, PlyRow, SizeLine } from "./types.ts";
 
 const DENOMINATORS = [2, 4, 8, 16, 32];
 const HINT = 'Use a number like 20, 20 1/2 or 20 3/8. Fractions can only be halves, quarters, eighths, sixteenths or thirty-seconds.';
@@ -73,6 +73,11 @@ export function drawerLineIssues(r: DrawerLine): Issues<"qty" | "height" | "widt
     qty: qtyProblem(r.qty), height: sizeProblem(r.height, any), width: sizeProblem(r.width, any), depth: sizeProblem(r.depth, any),
     scallop: sizeProblem(r.scallop, false),
   };
+}
+
+export function customComponentIssues(r: CustomComponent): Issues<"qty" | "height" | "width" | "depth"> {
+  const any = !!(r.height.trim() || r.width.trim() || r.depth.trim());
+  return { qty: qtyProblem(r.qty), height: sizeProblem(r.height, any), width: sizeProblem(r.width, any), depth: sizeProblem(r.depth, any) };
 }
 
 /** Plywood parts always need both sizes. */

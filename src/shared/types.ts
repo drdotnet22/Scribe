@@ -77,7 +77,11 @@ export interface DrawerOrderState {
   delivery: string;
   includePullouts: boolean;
   rows?: DrawerLine[];              // hand-edited list; when absent the rows come straight from the cutlist
+  custom?: CustomComponent[];       // custom parts from the drawer shop, listed below the drawers
 }
+
+/** A custom component ordered from the drawer shop: sizes plus a comment that spans the rest of the form row. */
+export interface CustomComponent { qty: number; height: string; width: string; depth: string; note: string }
 
 /** One row on the supplier's drawer order form. */
 /** One row of finished doors, drawer fronts or end panels. */

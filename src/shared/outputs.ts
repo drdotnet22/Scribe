@@ -3,7 +3,7 @@
 //  - plywood (sheet goods) cutlists grouped by material and thickness
 //  - named numbers (door square feet ...) that invoice formulas can use
 
-import type { CabRef, Dim, DoorOrderState, DrawerLine, DrawerOrderState, Job, OrderGroup, SizeLine, ParsedCutlist, PlyEditGroup, PlyGroup, PlyRow } from "./types.ts";
+import type { CabRef, CustomComponent, Dim, DoorOrderState, DrawerLine, DrawerOrderState, Job, OrderGroup, SizeLine, ParsedCutlist, PlyEditGroup, PlyGroup, PlyRow } from "./types.ts";
 import type { Vars } from "./calc.ts";
 import { dim } from "./cutlist.ts";
 import { DEFAULT_SETTINGS, type AppSettings } from "./settings.ts";
@@ -294,6 +294,14 @@ export function drawerLines(job: Job, d: DrawerOrderState | undefined, settings:
   if (d?.rows) return d.rows;
   return job.cutlist ? drawerRows(job.cutlist.parsed, d?.includePullouts ?? true, settings) : [];
 }
+
+export const blankCustomComponent = (): CustomComponent => ({ qty: 1, height: "", width: "", depth: "", note: "" });
+
+/** Rows left blank between the drawers and the custom components: one, when there are both. */
+export const customGap = (drawers: number, custom: number) => (drawers && custom ? 1 : 0);
+
+/** Form rows used: the drawers, a blank row, then the custom components. */
+export const drawerFormRowsUsed = (drawers: number, custom: number) => drawers + customGap(drawers, custom) + custom;
 
 /* ---------- finished doors, drawer fronts and end panels (the supplier's door order form) ---------- */
 

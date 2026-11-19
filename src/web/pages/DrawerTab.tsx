@@ -1,10 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
-import type { DrawerLine, DrawerOrderState, Job } from "../../shared/types.ts";
+import type { CustomComponent, DrawerLine, DrawerOrderState, Job } from "../../shared/types.ts";
 import { blankDrawerOrder } from "../../shared/invoice.ts";
 import { DEFAULT_SETTINGS, type AppSettings } from "../../shared/settings.ts";
 import { api } from "../api.ts";
-import { drawerLineIssues, issueList, tidyMeasure } from "../../shared/validate.ts";
-import { blankDrawerLine, depthMatchesSlide, drawerLines, SLIDE_SIZES } from "../../shared/outputs.ts";
+import { customComponentIssues, drawerLineIssues, issueList, tidyMeasure } from "../../shared/validate.ts";
+import { blankCustomComponent, blankDrawerLine, depthMatchesSlide, drawerFormRowsUsed, drawerLines, SLIDE_SIZES } from "../../shared/outputs.ts";
 import { gripHeader, moveItem, useRowDrag } from "../rowDrag.tsx";
 
 const CAPACITY = 21; // rows on the supplier's form
@@ -29,11 +29,17 @@ export function DrawerTab({ job, update, flush }: Props) {
   const edited = !!d.rows;
   const rows = drawerLines(job, job.drawerOrder, settings);
   const boxes = rows.reduce((t, r) => t + (Number(r.qty) || 0), 0);
-  const tooMany = rows.length > CAPACITY;
+  const custom = d.custom ?? [];
+  const used = drawerFormRowsUsed(rows.length, custom.length);
+  const tooMany = used > CAPACITY;
   const badDepth = rows.map((r, i) => (depthMatchesSlide(r) ? -1 : i + 1)).filter((n) => n > 0);
   const url = `/api/jobs/${job.id}/drawer-order.xlsx`;
   const issues = rows.map(drawerLineIssues);
   const problems = issueList(issues, { qty: "Quantity", height: "Height", width: "Width", depth: "Depth", scallop: "Scallop sides to" });
+  const customIssues = custom.map(customComponentIssues);
+  const customProblems = issueList(customIssues, { qty: "Quantity", height: "Height", width: "Width", depth: "Depth" })
+    .map((m) => `Custom component ${m.slice(4)}`);
+  const allProblems = problems.length + customProblems.length;
   const bad: React.CSSProperties = { borderColor: "var(--danger)", background: "#fff1f0" };
 
   const setOrder = (patch: Partial<DrawerOrderState>) =>
@@ -48,6 +54,25 @@ export function DrawerTab({ job, update, flush }: Props) {
     });
   const setRow = (i: number, patch: Partial<DrawerLine>) => editRows((r) => { r[i] = { ...r[i], ...patch }; });
   const drag = useRowDrag<"rows">((from, to) => editRows((r) => moveItem(r, r, from.i, to.i)));
+  const editCustom = (change: (c: CustomComponent[]) => void) =>
+    update((j) => {
+      const order = j.drawerOrder ?? blankDrawerOrder();
+      const next = structuredClone(order.custom ?? []);
+      change(next);
+      j.drawerOrder = { ...order, custom: next };
+    });
+  const setCustom = (i: number, patch: Partial<CustomComponent>) => editCustom((c) => { c[i] = { ...c[i], ...patch }; });
+  const customDrag = useRowDrag<"custom">((from, to) => editCustom((c) => moveItem(c, c, from.i, to.i)));
+  const customText = (i: number, key: "height" | "width" | "depth" | "note", label: string) => {
+    const measure = key !== "note";
+    const msg = measure ? customIssues[i][key] : undefined;
+    return (
+      <input aria-label={`${label}, custom component ${i + 1}`} aria-invalid={!!msg} title={msg}
+        style={{ ...cell, ...(msg ? bad : {}) }} value={custom[i][key]}
+        onChange={(e) => setCustom(i, { [key]: e.target.value })}
+        onBlur={measure ? (e) => { const t = tidyMeasure(e.target.value); if (t !== e.target.value) setCustom(i, { [key]: t }); } : undefined} />
+    );
+  };
   const reset = () => {
     if (!sure) { setSure(true); setTimeout(() => setSure(false), 4000); return; }
     setSure(false);
@@ -100,7 +125,9 @@ export function DrawerTab({ job, update, flush }: Props) {
         </div>
         {tooMany && (
           <p className="error-text" role="alert">
-            The form has room for {CAPACITY} rows and this list has {rows.length}. Remove some rows or split the order.
+            The form has room for {CAPACITY} rows and this order needs {used}
+            {custom.length ? ` (${rows.length} drawer rows, ${custom.length} custom component${custom.length === 1 ? "" : "s"}${rows.length ? " and a blank row between them" : ""})` : ""}.
+            Remove some rows or split the order.
           </p>
         )}
 
@@ -169,19 +196,67 @@ export function DrawerTab({ job, update, flush }: Props) {
               <span>Include pull-outs from the cutlist</span>
             </label>
           )}
-          <span style={{ flex: 1 }} />
-          {problems.length > 0 && <span className="error-text" role="alert">Fix the {problems.length} highlighted entr{problems.length === 1 ? "y" : "ies"} to download.</span>}
-          {tooMany || problems.length > 0 || !rows.length
-            ? <button className="btn primary" disabled>Download xlsx</button>
-            : <a className="btn primary" href={url} download onClick={async (e) => {
-                e.preventDefault(); await flush(); window.location.href = url;
-              }}>Download xlsx</a>}
         </div>
         {edited && job.cutlist && (
           <p className="muted" style={{ marginBottom: 0 }}>
             This list is yours now. A revised cutlist will not change it. Use "Start over from the cutlist" to pick up the new sizes.
           </p>
         )}
+      </div>
+
+      <div className="card" style={{ marginTop: 14 }}>
+        <h2 style={{ fontSize: 15, marginTop: 0 }}>Custom components</h2>
+        <p className="muted" style={{ marginTop: -4 }}>
+          Other parts from the drawer shop. They go on the form below the drawers, after a blank row, with the comments across the rest of the row.
+        </p>
+        {!!customProblems.length && (
+          <div className="error-text" role="alert">
+            <ul style={{ margin: "0 0 8px", paddingLeft: 18 }}>{customProblems.map((m) => <li key={m}>{m}</li>)}</ul>
+          </div>
+        )}
+        {!!custom.length && (
+          <div style={{ overflowX: "auto" }}>
+            <table className="plain" style={{ minWidth: 600 }}>
+              <thead>
+                <tr>{gripHeader}<th>Qty</th><th>Height</th><th>Width</th><th>Depth</th><th>Comments</th><th /></tr>
+              </thead>
+              <tbody>
+                {custom.map((c, i) => (
+                  <tr key={i} {...customDrag.rowProps("custom", i, custom.length)}>
+                    {customDrag.handle("custom", i, custom.length, `custom component ${i + 1}`)}
+                    <td style={{ width: 56 }}>
+                      <input type="number" min={1} step={1} aria-label={`Quantity, custom component ${i + 1}`}
+                        style={{ ...cell, ...(customIssues[i].qty ? bad : {}) }} value={c.qty}
+                        aria-invalid={!!customIssues[i].qty} title={customIssues[i].qty}
+                        onChange={(e) => setCustom(i, { qty: e.target.value === "" ? 0 : Number(e.target.value) })} />
+                    </td>
+                    <td style={{ width: 84 }}>{customText(i, "height", "Height")}</td>
+                    <td style={{ width: 84 }}>{customText(i, "width", "Width")}</td>
+                    <td style={{ width: 84 }}>{customText(i, "depth", "Depth")}</td>
+                    <td>{customText(i, "note", "Comments")}</td>
+                    <td>
+                      <button className="btn" aria-label={`Remove custom component ${i + 1}`} title="Remove this component"
+                        onClick={() => editCustom((x) => { x.splice(i, 1); })}>×</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {!custom.length && <p className="muted">No custom components.</p>}
+
+        <div className="row" style={{ marginTop: 12, flexWrap: "wrap" }}>
+          <button className="btn" onClick={() => editCustom((x) => { x.push(blankCustomComponent()); })}>Add custom component</button>
+          <span style={{ flex: 1 }} />
+          {allProblems > 0 && <span className="error-text" role="alert">Fix the {allProblems} highlighted entr{allProblems === 1 ? "y" : "ies"} to download.</span>}
+          {tooMany && <span className="error-text">Too many rows for the form.</span>}
+          {tooMany || allProblems > 0 || (!rows.length && !custom.length)
+            ? <button className="btn primary" disabled>Download xlsx</button>
+            : <a className="btn primary" href={url} download onClick={async (e) => {
+                e.preventDefault(); await flush(); window.location.href = url;
+              }}>Download xlsx</a>}
+        </div>
       </div>
     </main>
   );

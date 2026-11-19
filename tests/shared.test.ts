@@ -203,6 +203,30 @@ test("door order xlsx is filled in and keeps the template's parts", async () => 
   assert.ok(zip.file("xl/styles.xml") && zip.file("xl/theme/theme1.xml"));
 });
 
+test("drawer order xlsx: custom components follow a blank row, comments merged H:T", async () => {
+  const { default: JSZip } = await import("jszip");
+  const { buildDrawerForm } = await import("../src/server/drawerForm.ts");
+  const { blankJob } = await import("../src/shared/invoice.ts");
+  const { blankDrawerLine, drawerFormRowsUsed } = await import("../src/shared/outputs.ts");
+  const { DEFAULT_SETTINGS } = await import("../src/shared/settings.ts");
+  const job = blankJob("x", "Custom");
+  const d = { ...job.drawerOrder!, rows: [{ ...blankDrawerLine(), height: "4", width: "12", depth: "21" }, { ...blankDrawerLine(), height: "6", width: "12", depth: "21" }],
+    custom: [{ qty: 2, height: "3", width: "30", depth: "20", note: "Spice rack insert" }] };
+  const xml = await (await JSZip.loadAsync(await buildDrawerForm(job, d, DEFAULT_SETTINGS))).file("xl/worksheets/sheet1.xml")!.async("string");
+  const cell = (ref: string) => new RegExp(`<c r="${ref}"(?:\\s[^>]*?)?(?:/>|>[\\s\\S]*?</c>)`).exec(xml)![0];
+  assert.ok(cell("B35").includes(">6<"));                              // second drawer
+  assert.ok(!cell("B36").includes("<is>") && !cell("A36").includes("<v>")); // blank row
+  assert.ok(cell("A37").includes("<v>2</v>") && cell("D37").includes(">30<"));
+  assert.ok(cell("H37").includes("Spice rack insert") && cell("H37").includes('s="16"'));
+  assert.ok(xml.includes('<mergeCell ref="H37:T37"/>') && !xml.includes('"Q37:T37"') && !xml.includes('"O37:P37"'));
+  assert.ok(xml.includes('"Q36:T36"'));                                 // other rows keep theirs
+  const n = /<mergeCells count="(\d+)">/.exec(xml)![1];
+  assert.equal(+n, (xml.match(/<mergeCell ref=/g) ?? []).length);
+  assert.equal(drawerFormRowsUsed(2, 1), 4);
+  assert.equal(drawerFormRowsUsed(0, 3), 3);                          // no blank row without drawers
+  assert.equal(drawerFormRowsUsed(5, 0), 5);
+});
+
 test("door order defaults: cleaned, and used by new jobs and blank door orders", async () => {
   const { cleanSettings, DEFAULT_SETTINGS } = await import("../src/shared/settings.ts");
   const { blankJob, blankDoorOrder } = await import("../src/shared/invoice.ts");
